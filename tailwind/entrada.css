@@ -87,34 +87,16 @@
   .claro .eyebrow { color: var(--color-oro-oscuro); }
 
   /* Marcador de carambola: fila de bolitas en un alambre. Separador de secciones. */
-  /* Marcador: tres bolas de carambola (amarilla, blanca y roja) que ruedan de lado a lado sobre un riel. */
   .marcador {
-    --riel: rgb(243 245 240 / 0.14);
-    --bola: 1.25rem;
+    --b1: var(--color-oro);
+    --b2: var(--color-marfil);
     position: relative;
-    height: var(--bola);
-    background: linear-gradient(var(--riel), var(--riel)) 0 50% / 100% 1px no-repeat;
-  }
-  .claro .marcador { --riel: rgb(10 27 52 / 0.18); }
-  .marcador::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: calc(var(--bola) * 3 + 0.75rem);
-    height: var(--bola);
+    height: 1.25rem;
     background:
-      /* brillos */
-      radial-gradient(circle closest-side, rgb(255 255 255 / 0.85), transparent) 0.25rem 0.2rem / 0.4rem 0.4rem no-repeat,
-      radial-gradient(circle closest-side, rgb(255 255 255 / 0.9), transparent) calc(var(--bola) + 0.625rem) 0.2rem / 0.4rem 0.4rem no-repeat,
-      radial-gradient(circle closest-side, rgb(255 255 255 / 0.7), transparent) calc(var(--bola) * 2 + 1rem) 0.2rem / 0.4rem 0.4rem no-repeat,
-      /* bolas */
-      radial-gradient(circle closest-side, #f6cf3a 70%, #c99a12 96%, transparent 100%) 0 0 / var(--bola) var(--bola) no-repeat,
-      radial-gradient(circle closest-side, #fbfbf7 70%, #cfd4cc 96%, transparent 100%) calc(var(--bola) + 0.375rem) 0 / var(--bola) var(--bola) no-repeat,
-      radial-gradient(circle closest-side, #e0332b 70%, #9e1a14 96%, transparent 100%) calc(var(--bola) * 2 + 0.75rem) 0 / var(--bola) var(--bola) no-repeat;
-    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35));
-    animation: marcador-rueda 7s ease-in-out infinite alternate;
+      radial-gradient(circle at 0.625rem 0.625rem, var(--b1) 0.5rem, transparent calc(0.5rem + 1px)) 0 0 / 3.5rem 1.25rem repeat-x,
+      radial-gradient(circle at 2.375rem 0.625rem, var(--b2) 0.5rem, transparent calc(0.5rem + 1px)) 0 0 / 3.5rem 1.25rem repeat-x;
   }
+  .claro .marcador { --b1: var(--color-oro-oscuro); --b2: var(--color-carbon); }
   .marcador-entra { animation: marcador-entra 1.4s var(--ease-club) .6s both; }
 
   /* Textura sutil de paño para secciones verdes */
@@ -181,14 +163,12 @@
   #menu-movil.abierto .item { opacity: 1; transform: none; }
   .oculto { display: none !important; }
 }
-@keyframes marcador-rueda { from { left: 0; } to { left: calc(100% - var(--bola) * 3 - 0.75rem); } }
 @keyframes marcador-entra { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 @keyframes hero-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
 @keyframes palabra-sube { from { transform: translateY(105%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .revelar { opacity: 1; transform: none; }
   .marcador-entra { animation: none; }
-  .marcador::before { animation: none; }
   #menu-movil { transition: none; }
 }
 

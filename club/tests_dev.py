@@ -297,7 +297,7 @@ class InventarioDeMesasTests(TestCase):
 
         from django.apps import apps
 
-        importlib.import_module("club.migrations.0004_tarifa_y_promocion_confirmadas").cargar(apps, None)
+        importlib.import_module("club.migrations.0005_inventario_de_mesas").completar(apps, None)
 
     def test_comando_crea_7_mesas_con_tarifa(self):
         from django.core.management import call_command
@@ -322,8 +322,8 @@ class InventarioDeMesasTests(TestCase):
         from .models import Mesa
 
         Mesa.objects.all().delete()
-        for i, mod in enumerate(["carambola"] * 4 + ["pool"] * 2, 1):  # lo que hoy hay en producción
-            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, orden=i)
+        for i, mod in enumerate(["carambola"] * 4 + ["pool"] * 2, 1):  # lo que hay hoy en producción (tarifa ya asignada por la 0004)
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, orden=i, tarifa_hora=15000)
 
     def test_migracion_deja_mesa_1_a_5_carambola_y_6_y_7_pool(self):
         from .models import Mesa
