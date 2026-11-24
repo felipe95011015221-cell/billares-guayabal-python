@@ -1,6 +1,8 @@
 import json
 
 from django.conf import settings
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from . import negocio
 
@@ -21,7 +23,7 @@ def _json_ld():
         "sport": "Billiards",
         "logo": f"{base}/static/club/img/logo.png",
         "image": f"{base}/static/club/img/club/salon-vista-alta-noche.webp",
-        "potentialAction": {
+        **({"potentialAction": {
             "@type": "ReserveAction",
             "name": "Reservar mesa de billar",
             "target": {
@@ -33,7 +35,7 @@ def _json_ld():
                     "http://schema.org/MobileWebPlatform",
                 ],
             },
-        },
+        }} if settings.RESERVAS_EN_LINEA else {}),  # ReserveAction solo si de verdad se reserva en la web
     }
     if negocio.DIRECCION.confirmado:
         lugar["address"] = {"@type": "PostalAddress", "streetAddress": negocio.DIRECCION.valor, "addressLocality": negocio.CIUDAD.valor,
@@ -65,7 +67,14 @@ def sitio(request):
     ruta = request.path
     contexto_wa = next((c for pref, c in [("/reservas", "reservas"), ("/escuela", "clases"), ("/torneos", "torneos"),
                                            ("/eventos", "eventos"), ("/contacto", "ubicacion")] if ruta.startswith(pref)), "general")
+    en_linea = settings.RESERVAS_EN_LINEA
     return {
+        "reservas_en_linea": en_linea,
+        # Con las reservas en línea apagadas, todo botón «Reservar» abre WhatsApp con el mensaje ya escrito.
+        "reservar_url": reverse("reservas") if en_linea else negocio.enlace_whatsapp("reservas"),
+        "reservar_url_carambola": reverse("reservas") + "?modalidad=carambola" if en_linea else negocio.enlace_whatsapp("reservas_carambola"),
+        "reservar_url_pool": reverse("reservas") + "?modalidad=pool" if en_linea else negocio.enlace_whatsapp("reservas_pool"),
+        "reservar_attrs": "" if en_linea else mark_safe(' target="_blank" rel="noopener noreferrer"'),
         "negocio": negocio,
         "site_url": settings.SITE_URL,
         "ga_id": settings.GA_ID,

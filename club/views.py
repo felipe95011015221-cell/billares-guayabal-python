@@ -1,9 +1,10 @@
 """Vistas de las páginas públicas."""
 from datetime import timedelta
 
+from django.conf import settings
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
 
@@ -61,7 +62,10 @@ def inicio(request):
     return render(request, "club/inicio.html", {
         "ajustes": aj,
         "titulo_hero": aj.texto_hero or "El billar se vive en Guayabal",
-        "subtitulo_hero": aj.subtitulo_hero or "Carambola a tres bandas y pool en Guayabal, Medellín. Reserva tu mesa en línea en menos de dos minutos.",
+        "subtitulo_hero": aj.subtitulo_hero or (
+            "Carambola a tres bandas y pool en Guayabal, Medellín. Reserva tu mesa en línea en menos de dos minutos."
+            if settings.RESERVAS_EN_LINEA else
+            "Carambola a tres bandas y pool en Guayabal, Medellín. Reserva tu mesa por WhatsApp y te la confirmamos."),
         "clases": _clases_publicas()[:3],
         "promociones": _promociones_vigentes(),
         "torneos": torneos,
@@ -69,7 +73,9 @@ def inicio(request):
         "jugador": negocio.JUGADOR_ESTUDIO,
         "video": negocio.VIDEO_EVENTO,
         "seo_titulo_absoluto": "Billares en Medellín · Club de Billares Guayabal",
-        "seo_descripcion": "Club de billar en Guayabal, Medellín: carambola a tres bandas y pool. Reserva tu mesa en línea y conoce la escuela, torneos y eventos.",
+        "seo_descripcion": ("Club de billar en Guayabal, Medellín: carambola a tres bandas y pool. Reserva tu mesa en línea y conoce la escuela, torneos y eventos."
+                            if settings.RESERVAS_EN_LINEA else
+                            "Club de billar en Guayabal, Medellín: carambola a tres bandas y pool. Reserva tu mesa por WhatsApp y conoce la escuela, torneos y eventos."),
     })
 
 
@@ -80,8 +86,35 @@ def club(request):
     })
 
 
+def _mesas_por_modalidad():
+    """Mesas activas por modalidad, con su tarifa por hora si es la misma para todas."""
+    from .models import Mesa
+
+    grupos = []
+    for clave, nombre in Modalidad.choices:
+        mesas = list(Mesa.objects.filter(activa=True, modalidad=clave).order_by("orden", "id"))
+        tarifas = {m.tarifa_hora for m in mesas}
+        grupos.append({
+            "clave": clave, "nombre": nombre, "mesas": mesas, "cantidad": len(mesas),
+            "tarifa": tarifas.pop() if len(tarifas) == 1 else None,
+            "wa_url": negocio.enlace_whatsapp(f"reservas_{clave}"),
+        })
+    return grupos
+
+
+def _reservas_por_whatsapp(request):
+    return render(request, "club/reservas_whatsapp.html", {
+        "modalidades": _mesas_por_modalidad(),
+        "promociones": list(Promocion.objects.vigentes()[:3]),
+        "seo_titulo_absoluto": "Reservar mesa de billar en Medellín | Guayabal",
+        "seo_descripcion": "Reserva tu mesa de carambola o pool en el Club de Billares Guayabal por WhatsApp. Mira las mesas, la tarifa por hora y las promociones.",
+    })
+
+
 @ensure_csrf_cookie
 def reservas(request):
+    if not settings.RESERVAS_EN_LINEA:
+        return _reservas_por_whatsapp(request)
     aj = Ajustes.actual()
     hoy = hoy_bogota()
     modalidad = request.GET.get("modalidad")
@@ -104,6 +137,8 @@ def reservas(request):
 
 @ensure_csrf_cookie
 def consultar_reserva(request):
+    if not settings.RESERVAS_EN_LINEA:
+        return redirect("reservas")
     return render(request, "club/consultar.html", {
         "seo_titulo": "Consultar mi reserva", "seo_noindex": True,
         "seo_descripcion": "Consulta el estado de tu reserva en el Club de Billares Guayabal con tu código y celular.",
@@ -117,7 +152,7 @@ def escuela(request):
     return render(request, "club/escuela.html", {
         "clases": clases, "calendario": calendario, "hay_propuestas": any(not c.confirmada for c in clases),
         "seo_titulo_absoluto": "Clases de billar en Medellín · Escuela Guayabal",
-        "seo_descripcion": "Clases de billar en Medellín: carambola a tres bandas y pool, para principiantes y jugadores avanzados. Pre-inscríbete en línea.",
+        "seo_descripcion": "Clases de billar en Medellín: carambola a tres bandas y pool, para principiantes y jugadores avanzados. Consulta horarios e inscripción por WhatsApp.",
     })
 
 

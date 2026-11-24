@@ -4,11 +4,11 @@
   <div class="absolute inset-0 -z-10 bg-carbon/75"></div>
   <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgb(10_27_52/0.9)_75%)]"></div>
   <div class="contenedor revelar text-center">
-    <p class="eyebrow mb-8 justify-center">Reserva en minutos</p>
+    <p class="eyebrow mb-8 justify-center">{% if reservas_en_linea %}Reserva en minutos{% else %}Reserva por WhatsApp{% endif %}</p>
     <h2 class="mx-auto max-w-4xl font-display text-5xl leading-[0.95] sm:text-7xl">{{ titulo|default:"Tu próxima partida comienza aquí." }}</h2>
     <div class="mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-      <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="cta_final" class="btn btn-lg btn-oro">Reservar una mesa</a>
-      <a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="cta_final" class="btn btn-lg btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Escribir por WhatsApp</a>
+      <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="cta_final" class="btn btn-lg btn-oro">{% if reservas_en_linea %}Reservar una mesa{% else %}{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Reservar por WhatsApp{% endif %}</a>
+      {% if reservas_en_linea %}<a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="cta_final" class="btn btn-lg btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Escribir por WhatsApp</a>{% else %}<a href="{% url 'reservas' %}" class="btn btn-lg btn-contorno">Ver mesas y tarifa</a>{% endif %}
     </div>
   </div>
   <span class="pointer-events-none absolute bottom-3 right-4 text-xs text-marfil/70">Foto de referencia</span>

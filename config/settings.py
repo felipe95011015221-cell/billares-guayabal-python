@@ -139,6 +139,11 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not (DEBUG or EN_VERCEL)
                     else "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+# Reservas en línea (asistente de reservas, consulta por código y su API). Apagadas por defecto: el club
+# reserva por WhatsApp. Se reactivan con RESERVAS_EN_LINEA=1. Las pruebas las dejan encendidas para cubrir
+# el código; hay pruebas aparte con el interruptor apagado.
+RESERVAS_EN_LINEA = _env_bool("RESERVAS_EN_LINEA", False) or "test" in sys.argv[1:2]
+
 if "test" in sys.argv[1:2]:  # las pruebas no necesitan collectstatic ni el manifiesto con hash
     STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
 MEDIA_URL = "media/"
