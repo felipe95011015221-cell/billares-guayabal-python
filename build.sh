@@ -7,6 +7,7 @@ pip install -r requirements.txt
 
 python manage.py collectstatic --no-input
 python manage.py migrate --no-input
+python manage.py createcachetable
 python manage.py cargar_datos_iniciales   # sin --demo: nunca crea datos ficticios en producción
 
 # Administrador inicial (solo si definiste estas variables en Render; si ya existe, no hace nada).

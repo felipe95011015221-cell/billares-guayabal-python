@@ -84,6 +84,26 @@ Los horarios son intervalos `[inicio, fin)`: una reserva de 8 a 10 y otra de 10 
 - La base de datos gratuita **vence a los 30 días**. Para uso real conviene el plan pago, o una base externa (Neon o Supabase) conectada con `DATABASE_URL`.
 - Las fotos que subas desde el panel se guardan en el disco del servidor, que en Render se borra en cada despliegue. Las fotos incluidas con el sitio (`club/static`) no se pierden. Para subir fotos desde el panel de forma permanente se necesita un disco persistente o un almacenamiento externo.
 
+## Publicar en Vercel
+
+Vercel detecta Django solo (por `manage.py`). Lo que hace en cada despliegue:
+
+1. Instala las dependencias de `pyproject.toml`.
+2. Corre `vercel_build.py`: migraciones, tabla de caché, datos iniciales y administrador.
+3. Ejecuta `collectstatic` y sirve los estáticos desde su CDN.
+
+Pasos:
+
+1. En Vercel: **Add New → Project** e importa este repositorio.
+2. En **Storage**, crea una base **Neon (Postgres)** y conéctala al proyecto. Vercel agrega `DATABASE_URL` sola.
+3. En **Settings → Environment Variables** agrega:
+   - `DJANGO_SECRET_KEY`: una clave larga y aleatoria
+   - `SITE_URL`: por ejemplo `https://billares-guayabal-python.vercel.app`
+   - `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, `DJANGO_SUPERUSER_PASSWORD`: tu usuario del panel
+4. Despliega. El dominio `*.vercel.app` se permite solo.
+
+En Vercel el disco es de solo lectura, así que el panel no permite subir fotos nuevas. Las fotos se agregan en `club/static/club/img` y en `GALERIA_INICIAL` de `negocio.py`.
+
 ## Datos pendientes de confirmar con el club
 
 En `club/negocio.py` cada dato tiene un estado: `confirmado`, `publico` (visto en fuentes públicas) o `pendiente`.

@@ -16,3 +16,7 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[tool.vercel.scripts]
+# Vercel: después de instalar dependencias prepara la base (collectstatic lo hace Vercel solo).
+build = "python vercel_build.py"
