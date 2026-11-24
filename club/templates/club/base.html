@@ -26,7 +26,7 @@
       </nav>
       <div class="flex items-center gap-2">
         <a href="{{ wa_contexto }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="encabezado" aria-label="Escribir por WhatsApp" class="hidden h-11 w-11 items-center justify-center rounded-full border border-marfil/25 text-marfil transition-[border-color,color] duration-300 hover:border-oro hover:text-oro md:inline-flex">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}</a>
-        <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="encabezado" class="btn btn-sm btn-oro hidden sm:inline-flex">Reservar mesa</a>
+        <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="encabezado" class="btn btn-sm btn-oro hidden sm:inline-flex">Reservar mesa</a>
         <button type="button" id="boton-menu" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-marfil/25 text-marfil xl:hidden" aria-expanded="false" aria-controls="menu-movil" aria-label="Abrir menú">
           <svg data-icono="menu" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
           <svg data-icono="cerrar" class="oculto h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -46,13 +46,13 @@
         {% endfor %}
       </ul>
       <div class="mt-8 grid gap-3">
-        <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="menu_movil" class="btn btn-lg btn-oro w-full">Reservar una mesa</a>
+        <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="menu_movil" class="btn btn-lg btn-oro w-full">Reservar una mesa</a>
         <div class="grid grid-cols-3 gap-3 text-sm text-marfil/90">
           <a href="{{ wa_general }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="menu_movil" class="flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-xl border border-marfil/20">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5 text-oro" %} WhatsApp</a>
           <a href="{{ enlace_llamar }}" data-evento="cta_llamar" data-evento-origen="menu_movil" class="flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-xl border border-marfil/20">{% include "club/parciales/icono_llamar.html" with clase="h-5 w-5 text-oro" %} Llamar</a>
           <a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" data-evento="cta_como_llegar" data-evento-origen="menu_movil" class="flex min-h-[4.5rem] flex-col items-center justify-center gap-2 rounded-xl border border-marfil/20">{% include "club/parciales/icono_ubicacion.html" with clase="h-5 w-5 text-oro" %} Cómo llegar</a>
         </div>
-        <a href="{% url 'consultar' %}" class="flex min-h-11 items-center justify-center text-sm font-semibold text-oro">Consultar mi reserva</a>
+        {% if reservas_en_linea %}<a href="{% url 'consultar' %}" class="flex min-h-11 items-center justify-center text-sm font-semibold text-oro">Consultar mi reserva</a>{% endif %}
       </div>
     </nav>
   </div>
@@ -67,7 +67,7 @@
           <a href="{% url 'inicio' %}" class="inline-block" aria-label="Club de Billares Guayabal, inicio"><img src="{% static 'club/img/logo.webp' %}" alt="" width="900" height="758" loading="lazy" class="h-32 w-auto sm:h-40"></a>
           <p class="mt-6 max-w-sm text-sm leading-relaxed text-marfil/75">Carambola a tres bandas y pool en Guayabal, Medellín. Un lugar para jugar, competir, aprender y compartir.</p>
           <div class="mt-6 flex flex-wrap gap-3">
-            <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="pie" class="btn btn-md btn-oro">Reservar mesa</a>
+            <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="pie" class="btn btn-md btn-oro">Reservar mesa</a>
             <a href="{{ wa_general }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="pie" class="btn btn-md btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-4 w-4" %}WhatsApp</a>
           </div>
         </div>
@@ -75,7 +75,7 @@
           <p class="eyebrow mb-4">Explora</p>
           <ul class="grid grid-cols-2 gap-x-6 text-sm text-marfil/80 lg:grid-cols-1">
             {% for nombre_url, etiqueta in nav %}<li><a href="{% url nombre_url %}" class="enlace-pie">{{ etiqueta }}</a></li>{% endfor %}
-            <li><a href="{% url 'consultar' %}" class="enlace-pie">Mi reserva</a></li>
+            {% if reservas_en_linea %}<li><a href="{% url 'consultar' %}" class="enlace-pie">Mi reserva</a></li>{% endif %}
           </ul>
         </nav>
         <address class="not-italic lg:col-span-4">
@@ -111,10 +111,10 @@
       <a href="{{ enlace_llamar }}" data-evento="cta_llamar" data-evento-origen="barra_movil" aria-label="Llamar al club" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-marfil/25 text-oro">{% include "club/parciales/icono_llamar.html" with clase="h-5 w-5" %}</a>
       <a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" data-evento="cta_como_llegar" data-evento-origen="barra_movil" aria-label="Cómo llegar" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-marfil/25 text-oro">{% include "club/parciales/icono_ubicacion.html" with clase="h-5 w-5" %}</a>
       <a href="{{ wa_contexto }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="barra_movil" aria-label="Escribir por WhatsApp" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#157a47] text-white">{% include "club/parciales/icono_whatsapp.html" with clase="h-6 w-6" %}</a>
-      {% if en_reservas %}
+      {% if en_reservas and reservas_en_linea %}
       <a href="{% url 'consultar' %}" class="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full border border-oro/60 px-3 text-sm font-bold text-oro">Consultar mi reserva</a>
       {% else %}
-      <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="barra_movil" class="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full bg-oro px-3 text-sm font-bold text-carbon">Reservar mesa</a>
+      <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="barra_movil" class="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full bg-oro px-3 text-sm font-bold text-carbon">Reservar mesa</a>
       {% endif %}
     </div>
   </div>

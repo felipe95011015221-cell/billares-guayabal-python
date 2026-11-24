@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.management import call_command
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 
 from . import disponibilidad as disp
 from .models import Ajustes, Bloqueo, Mesa, Reserva
@@ -528,3 +528,87 @@ class DatosConfirmadosTests(TestCase):
         from . import negocio
 
         self.assertEqual(negocio.datos_pendientes(), [])
+
+
+@override_settings(RESERVAS_EN_LINEA=False)
+class SoloWhatsAppTests(TestCase):
+    """Con las reservas en línea apagadas (estado de producción), reservar es solo por WhatsApp."""
+
+    def test_reserva_en_linea_apagada_en_toda_la_web(self):
+        import re
+
+        for ruta in ["/", "/club/", "/escuela/", "/torneos/", "/eventos/", "/galeria/", "/contacto/", "/reservas/"]:
+            with self.subTest(ruta=ruta):
+                r = self.client.get(ruta)
+                self.assertEqual(r.status_code, 200)
+                html = r.content.decode()
+                self.assertNotIn("/reservas/consultar/", html)
+                self.assertNotIn("Consultar mi reserva", html)
+                self.assertNotIn("Mi reserva", html)
+                self.assertNotIn("reservas.js", html)
+                for tag in re.findall(r'<a [^>]*data-evento="cta_reservar"[^>]*>', html):
+                    self.assertIn('href="https://wa.me/', tag, tag)  # todo «Reservar» abre WhatsApp...
+                    self.assertIn('rel="noopener noreferrer"', tag, tag)  # ...de forma segura
+
+    def test_inicio_ofrece_whatsapp_y_no_reserva_en_linea(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn("Reservar por WhatsApp", html)
+        self.assertIn("Reservas por WhatsApp", html)
+        self.assertNotIn("Reserva en línea", html)
+        self.assertNotIn("Disponibilidad real", html)
+
+    def test_pagina_de_reservas_muestra_mesas_y_tarifa_con_whatsapp(self):
+        Mesa.objects.create(nombre="Mesa 1", modalidad="carambola", tarifa_hora=15000, orden=1)
+        Mesa.objects.create(nombre="Mesa 2", modalidad="pool", tarifa_hora=15000, orden=2)
+        html = self.client.get("/reservas/").content.decode()
+        self.assertIn("$ 15.000", html)
+        self.assertIn("Mesa 1", html)
+        self.assertIn("https://wa.me/573147730533?text=", html)
+        self.assertNotIn('id="form-reserva"', html)
+
+    def test_consultar_redirige_a_reservas(self):
+        r = self.client.get("/reservas/consultar/")
+        self.assertRedirects(r, "/reservas/", fetch_redirect_response=False)
+
+    def test_api_de_reservas_desactivada_no_crea_nada(self):
+        mesa = Mesa.objects.create(nombre="M", modalidad="pool", tarifa_hora=15000)
+        cuerpo = json.dumps({"modalidad": "pool", "fecha": "2030-01-02", "inicio": 600, "duracion": 60, "mesa_id": mesa.id,
+                             "nombre": "Ana Pérez", "celular": "3001234567", "correo": "a@ejemplo.test", "acepta_datos": True})
+        self.assertEqual(self.client.post("/api/reservas/", data=cuerpo, content_type="application/json").status_code, 410)
+        self.assertEqual(self.client.post("/api/reservas/consultar/", data=cuerpo, content_type="application/json").status_code, 410)
+        self.assertEqual(self.client.get("/api/disponibilidad/?modalidad=pool&fecha=2030-01-02&duracion=60").status_code, 410)
+        self.assertEqual(Reserva.objects.count(), 0)
+        # el resto de formularios (contacto, clases, torneos, eventos) sigue funcionando
+        self.assertEqual(self.client.post("/api/contacto/", data="{}", content_type="application/json").status_code, 422)
+
+    def test_json_ld_sin_reserveaction(self):
+        import re
+
+        def accion(html):
+            return "ReserveAction" in re.search(r'application/ld\+json">(.*?)</script>', html, re.S).group(1)
+
+        self.assertFalse(accion(self.client.get("/").content.decode()))
+        with override_settings(RESERVAS_EN_LINEA=True):
+            self.assertTrue(accion(self.client.get("/").content.decode()))
+
+    def test_con_el_interruptor_encendido_todo_sigue_igual(self):
+        with override_settings(RESERVAS_EN_LINEA=True):
+            html = self.client.get("/").content.decode()
+            self.assertIn('href="/reservas/"', html)
+            self.assertIn("/reservas/consultar/", html)
+            self.assertEqual(self.client.get("/reservas/consultar/").status_code, 200)
+
+    def test_boton_de_la_promocion_abre_whatsapp_de_carambola(self):
+        import re
+
+        from .models import Promocion
+
+        Promocion.objects.all().delete()
+        Promocion.objects.create(titulo="Promo", enlace_url="/reservas/?modalidad=carambola", enlace_texto="Reservar mesa de carambola")
+        Promocion.objects.create(titulo="Otra", enlace_url="/eventos/", enlace_texto="Ver eventos")
+        html = self.client.get("/").content.decode()
+        botones = re.findall(r'<a [^>]*data-evento="promocion"[^>]*>', html)
+        self.assertEqual(len(botones), 2)
+        self.assertTrue(botones[0].startswith('<a href="https://wa.me/'))
+        self.assertIn('rel="noopener noreferrer"', botones[0])
+        self.assertIn('href="/eventos/"', botones[1])  # los enlaces que no son de reserva no cambian

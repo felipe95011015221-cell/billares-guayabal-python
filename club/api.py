@@ -1,8 +1,10 @@
 """APIs JSON usadas por el asistente de reservas y los formularios del sitio."""
 import json
 import logging
+from functools import wraps
 from urllib.parse import quote
 
+from django.conf import settings
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
@@ -11,6 +13,16 @@ from . import forms, negocio, servicios
 from .models import MensajeContacto, Reserva, SolicitudEvento
 
 log = logging.getLogger(__name__)
+
+
+def solo_con_reservas_en_linea(vista):
+    """Con el interruptor apagado la API de reservas no existe: 410, sin crear ni consultar nada."""
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        if not settings.RESERVAS_EN_LINEA:
+            return JsonResponse({"ok": False, "error": "Las reservas en línea están desactivadas. Escríbenos por WhatsApp para reservar.", "campos": {}}, status=410)
+        return vista(request, *args, **kwargs)
+    return envoltura
 
 
 def _ok(data, status=200):
@@ -68,6 +80,7 @@ def _manejar(request, nombre, form_cls, accion, limite=8):
 
 
 @require_GET
+@solo_con_reservas_en_linea
 def disponibilidad(request):
     form = forms.ConsultaDisponibilidadForm(request.GET)
     if not form.is_valid():
@@ -103,6 +116,7 @@ def _resumen_reserva(r: Reserva) -> dict:
 
 
 @require_POST
+@solo_con_reservas_en_linea
 def crear_reserva(request):
     def accion(d):
         r = servicios.crear_reserva(
@@ -115,6 +129,7 @@ def crear_reserva(request):
 
 
 @require_POST
+@solo_con_reservas_en_linea
 def consultar_reserva(request):
     def accion(d):
         r = Reserva.objects.select_related("mesa").filter(codigo=d["codigo"]).first()

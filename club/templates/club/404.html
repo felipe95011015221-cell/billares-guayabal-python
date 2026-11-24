@@ -6,7 +6,7 @@
   <p class="mt-6 max-w-md text-marfil/80">La página que buscas no existe o cambió de lugar.</p>
   <div class="mt-10 flex flex-col gap-3 sm:flex-row">
     <a href="{% url 'inicio' %}" class="btn btn-lg btn-oro">Volver al inicio</a>
-    <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="404" class="btn btn-lg btn-contorno">Reservar una mesa</a>
+    <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="404" class="btn btn-lg btn-contorno">Reservar una mesa</a>
   </div>
 </section>
 {% endblock %}

@@ -16,8 +16,8 @@
       <div class="marcador marcador-entra mt-8 max-w-md text-marfil" aria-hidden="true"></div>
       <p class="entrar mt-7 max-w-xl text-lg leading-relaxed text-marfil/90 sm:text-xl" style="animation-delay:.95s">{{ subtitulo_hero }}</p>
       <div class="entrar mt-9 flex flex-col gap-3 sm:flex-row sm:gap-4" style="animation-delay:1.15s">
-        <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="hero" class="btn btn-lg btn-oro">Reservar una mesa</a>
-        <a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="hero" class="btn btn-lg btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Escribir por WhatsApp</a>
+        <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="hero" class="btn btn-lg btn-oro">{% if reservas_en_linea %}Reservar una mesa{% else %}{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Reservar por WhatsApp{% endif %}</a>
+        {% if reservas_en_linea %}<a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="hero" class="btn btn-lg btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Escribir por WhatsApp</a>{% else %}<a href="{% url 'reservas' %}" class="btn btn-lg btn-contorno">Ver mesas y tarifa</a>{% endif %}
       </div>
     </div>
     <span class="pointer-events-none absolute bottom-3 right-4 text-sm text-marfil/70">Foto de referencia</span>
@@ -40,7 +40,7 @@
       </div>
       <div class="dato-confianza">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-        <dt class="sr-only">Reservas</dt><dd><b>Reserva en línea</b><span>Disponibilidad real y código de reserva</span></dd>
+        <dt class="sr-only">Reservas</dt>{% if reservas_en_linea %}<dd><b>Reserva en línea</b><span>Disponibilidad real y código de reserva</span></dd>{% else %}<dd><b>Reserva por WhatsApp</b><span>Escríbenos y te confirmamos la mesa</span></dd>{% endif %}
       </div>
     </dl>
   </div>
@@ -56,7 +56,7 @@
     <div class="mt-14 grid gap-6 md:grid-cols-2">
       {% with f1=negocio.FOTOS.jugador_salon f2=negocio.FOTOS.bolas_bokeh %}
       <article class="revelar">
-        <a href="{% url 'reservas' %}?modalidad=carambola" data-evento="cta_reservar" data-evento-origen="modalidad_carambola" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
+        <a href="{{ reservar_url_carambola }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="modalidad_carambola" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
           <img src="{{ f1.archivo|img }}" alt="{{ f1.alt }}" width="{{ f1.ancho }}" height="{{ f1.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
           <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/50 to-transparent"></div>
           <span class="foto-ref">Foto de referencia</span>
@@ -68,7 +68,7 @@
         </a>
       </article>
       <article class="revelar">
-        <a href="{% url 'reservas' %}?modalidad=pool" data-evento="cta_reservar" data-evento-origen="modalidad_pool" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
+        <a href="{{ reservar_url_pool }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="modalidad_pool" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
           <img src="{{ f2.archivo|img }}" alt="{{ f2.alt }}" width="{{ f2.ancho }}" height="{{ f2.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
           <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/50 to-transparent"></div>
           <span class="foto-ref">Foto de referencia</span>
@@ -88,12 +88,13 @@
 <section class="seccion textura-verde tono-verde">
   <div class="contenedor">
     <div class="grid gap-14 lg:grid-cols-12">
+      {% if reservas_en_linea %}
       <div class="revelar lg:col-span-5">
         <p class="eyebrow mb-6">Reservas en línea</p>
         <h2 class="titulo-seccion">Tu mesa, lista cuando llegues.</h2>
         <p class="texto-seccion">Consulta la disponibilidad real, escoge la mesa y envía tu solicitud en menos de dos minutos desde el celular.</p>
         <div class="mt-10 flex flex-col gap-3 sm:flex-row">
-          <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="como_funciona" class="btn btn-lg btn-oro">Reservar una mesa</a>
+          <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="como_funciona" class="btn btn-lg btn-oro">Reservar una mesa</a>
           <a href="{% url 'consultar' %}" class="btn btn-lg btn-contorno">Consultar mi reserva</a>
         </div>
       </div>
@@ -102,6 +103,22 @@
         <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">2</span><div><h3 class="font-display text-2xl">Mira la disponibilidad</h3><p class="mt-2 text-sm text-marfil/80">Consultamos el estado real de cada mesa en el servidor.</p></div></li>
         <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">3</span><div><h3 class="font-display text-2xl">Recibe tu código</h3><p class="mt-2 text-sm text-marfil/80">Tu solicitud queda registrada con un código único.</p></div></li>
       </ol>
+      {% else %}
+      <div class="revelar lg:col-span-5">
+        <p class="eyebrow mb-6">Reservas por WhatsApp</p>
+        <h2 class="titulo-seccion">Tu mesa, lista cuando llegues.</h2>
+        <p class="texto-seccion">Escríbenos con la modalidad, la fecha y la hora que prefieres y te confirmamos la mesa.</p>
+        <div class="mt-10 flex flex-col gap-3 sm:flex-row">
+          <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="como_funciona" class="btn btn-lg btn-oro">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Reservar por WhatsApp</a>
+          <a href="{% url 'reservas' %}" class="btn btn-lg btn-contorno">Ver mesas y tarifa</a>
+        </div>
+      </div>
+      <ol class="grid gap-4 lg:col-span-6 lg:col-start-7">
+        <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">1</span><div><h3 class="font-display text-2xl">Escríbenos</h3><p class="mt-2 text-sm text-marfil/80">Dinos si quieres carambola o pool, y para qué fecha y hora.</p></div></li>
+        <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">2</span><div><h3 class="font-display text-2xl">Te confirmamos la mesa</h3><p class="mt-2 text-sm text-marfil/80">Revisamos la disponibilidad y te respondemos por el mismo chat.</p></div></li>
+        <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">3</span><div><h3 class="font-display text-2xl">Llega y juega</h3><p class="mt-2 text-sm text-marfil/80">Te esperamos en {{ negocio.DIRECCION.valor }}.</p></div></li>
+      </ol>
+      {% endif %}
     </div>
   </div>
 </section>

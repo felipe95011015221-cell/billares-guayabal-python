@@ -16,7 +16,7 @@
           {% if p.descripcion %}<p class="mt-3 text-base leading-relaxed {% if p.destacada %}text-marfil/90{% else %}text-carbon/75{% endif %}">{{ p.descripcion }}</p>{% endif %}
           <div class="mt-auto pt-6">
             {% if p.vigencia_texto %}<p class="inline-flex items-center gap-2 text-sm font-semibold {% if p.destacada %}text-oro{% else %}text-oro-oscuro{% endif %}"><svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>{{ p.vigencia_texto }}</p>{% endif %}
-            {% if p.enlace_url %}<div class="mt-4"><a href="{{ p.enlace_url }}" data-evento="promocion" data-evento-origen="{{ p.titulo|slugify }}" class="btn btn-md {% if p.destacada %}btn-oro{% else %}btn-oscuro{% endif %}">{{ p.enlace_texto|default:"Ver más" }}</a></div>{% endif %}
+            {% if p.enlace_url %}<div class="mt-4">{% if not reservas_en_linea and "/reservas/" in p.enlace_url %}<a href="{% if "pool" in p.enlace_url %}{{ reservar_url_pool }}{% elif "carambola" in p.enlace_url %}{{ reservar_url_carambola }}{% else %}{{ reservar_url }}{% endif %}"{{ reservar_attrs }} data-evento="promocion" data-evento-origen="{{ p.titulo|slugify }}" class="btn btn-md {% if p.destacada %}btn-oro{% else %}btn-oscuro{% endif %}">{{ p.enlace_texto|default:"Ver más" }}</a>{% else %}<a href="{{ p.enlace_url }}" data-evento="promocion" data-evento-origen="{{ p.titulo|slugify }}" class="btn btn-md {% if p.destacada %}btn-oro{% else %}btn-oscuro{% endif %}">{{ p.enlace_texto|default:"Ver más" }}</a>{% endif %}</div>{% endif %}
           </div>
         </article>
       </li>

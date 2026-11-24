@@ -11,7 +11,7 @@
         {% if con_boton %}
         <div class="mt-9 flex flex-col gap-3 sm:flex-row">
           <a href="{% url 'eventos' %}" class="btn btn-md btn-oro">Organiza tu evento</a>
-          <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="video" class="btn btn-md btn-contorno">Reservar una mesa</a>
+          <a href="{{ reservar_url }}"{{ reservar_attrs }} data-evento="cta_reservar" data-evento-origen="video" class="btn btn-md btn-contorno">Reservar una mesa</a>
         </div>
         {% endif %}
       </div>
