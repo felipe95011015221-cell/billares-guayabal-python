@@ -10,8 +10,8 @@
       <a href="{{ enlace_llamar }}" data-evento="cta_llamar" data-evento-origen="ubicacion" class="btn btn-md btn-oscuro">Llamar</a>
       <a href="{{ wa_ubicacion }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="ubicacion" class="btn btn-md btn-oscuro">{% include "club/parciales/icono_whatsapp.html" with clase="h-4 w-4" %}WhatsApp</a>
     </div>
-    {% if negocio.DIRECCION.por_confirmar or negocio.TELEFONO.por_confirmar or negocio.HORARIO.por_confirmar %}
-    <div class="aviso mt-8 text-carbon/85"><p>Dirección, teléfono y horario provienen de fuentes públicas y están pendientes de validación por el club. Antes de tu visita, confírmalos por WhatsApp.</p></div>
+    {% if negocio.TELEFONO.por_confirmar or negocio.HORARIO.por_confirmar %}
+    <div class="aviso mt-8 text-carbon/85"><p>{% if negocio.TELEFONO.por_confirmar and negocio.HORARIO.por_confirmar %}El teléfono y el horario provienen de fuentes públicas y están pendientes de validación por el club.{% elif negocio.TELEFONO.por_confirmar %}El teléfono proviene de fuentes públicas y está pendiente de validación por el club.{% elif negocio.HORARIO.por_confirmar %}El horario proviene de fuentes públicas y está pendiente de validación por el club.{% else %}Algunos datos están pendientes de validación por el club.{% endif %} Antes de tu visita, confírmalo por WhatsApp.</p></div>
     {% endif %}
   </div>
   <div class="lg:col-span-7">
