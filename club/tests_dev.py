@@ -369,3 +369,38 @@ class InventarioDeMesasTests(TestCase):
     def test_aviso_de_reservas_ya_no_dice_inventario_pendiente(self):
         html = self.client.get("/reservas/").content.decode()
         self.assertNotIn("pendientes de confirmación", html)
+
+
+class MigracionPromocion8000Tests(TestCase):
+    """La migración 0006 cambia la promoción a $ 8.000 en cualquier mesa hasta las 3 p. m."""
+
+    def _migrar(self, numero, nombre, funcion):
+        import importlib
+
+        from django.apps import apps
+
+        getattr(importlib.import_module(f"club.migrations.{numero}_{nombre}"), funcion)(apps, None)
+
+    def test_reemplaza_la_promocion_anterior_sin_duplicar(self):
+        Promocion.objects.all().delete()
+        self._migrar("0004", "tarifa_y_promocion_confirmadas", "cargar")
+        self._migrar("0006", "promocion_8000_cualquier_mesa", "actualizar")
+        self._migrar("0006", "promocion_8000_cualquier_mesa", "actualizar")
+        p = Promocion.objects.get()
+        self.assertEqual(p.titulo, "La hora de billar en cualquier mesa, a $ 8.000")
+        self.assertEqual(p.descripcion, "Carambola o pool, hasta las 3:00 p. m.")
+        self.assertEqual(p.enlace_url, "/reservas/")
+        html = self.client.get("/").content.decode()
+        self.assertIn("8.000", html)
+        self.assertIn("3:00 p. m.", html)
+        self.assertNotIn("7.500", html)
+
+    def test_crea_la_promocion_si_la_anterior_no_existe(self):
+        Promocion.objects.all().delete()
+        self._migrar("0006", "promocion_8000_cualquier_mesa", "actualizar")
+        self.assertEqual(Promocion.objects.filter(titulo__contains="8.000", activa=True).count(), 1)
+
+    def test_estado_final_tras_todas_las_migraciones(self):
+        p = Promocion.objects.get(titulo__contains="8.000")
+        self.assertTrue(p.activa)
+        self.assertFalse(Promocion.objects.filter(titulo__contains="7.500").exists())
