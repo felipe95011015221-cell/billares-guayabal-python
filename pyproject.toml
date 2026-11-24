@@ -1,0 +1,18 @@
+[project]
+name = "billares-guayabal"
+version = "0.1.0"
+description = "Sitio web del Club de Billares Guayabal (Django)"
+requires-python = ">=3.12"
+dependencies = [
+    "dj-database-url>=3.1.2",
+    "django>=5.1,<5.2",
+    "gunicorn>=27.0.1",
+    "pillow>=13.0.0",
+    "psycopg[binary]>=3.3.9",
+    "python-dotenv>=1.2.4",
+    "whitenoise>=6.12.0",
+]
+
+
+[tool.uv]
+package = false
