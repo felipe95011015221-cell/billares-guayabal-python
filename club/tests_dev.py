@@ -310,19 +310,54 @@ class InventarioDeMesasTests(TestCase):
         self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
         self.assertEqual(set(Mesa.objects.values_list("tarifa_hora", flat=True)), {15000})
 
-    def test_migracion_completa_lo_que_falta_sin_borrar_ni_renombrar(self):
+    def _esquema(self):
+        from .models import Mesa
+
+        return [(m.nombre, m.modalidad) for m in Mesa.objects.order_by("orden", "id")]
+
+    ESPERADO = [("Mesa 1", "carambola"), ("Mesa 2", "carambola"), ("Mesa 3", "carambola"), ("Mesa 4", "carambola"),
+                ("Mesa 5", "carambola"), ("Mesa 6", "pool"), ("Mesa 7", "pool")]
+
+    def _mesas_de_ejemplo(self):
         from .models import Mesa
 
         Mesa.objects.all().delete()
-        for i, mod in enumerate(["carambola"] * 4 + ["pool"] * 2, 1):  # el inventario de ejemplo anterior
+        for i, mod in enumerate(["carambola"] * 4 + ["pool"] * 2, 1):  # lo que hoy hay en producción
             Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, orden=i)
-        antes = set(Mesa.objects.values_list("pk", "nombre", "modalidad"))
+
+    def test_migracion_deja_mesa_1_a_5_carambola_y_6_y_7_pool(self):
+        from .models import Mesa
+
+        self._mesas_de_ejemplo()
+        ids = set(Mesa.objects.values_list("pk", flat=True))
         self._migrar(); self._migrar()  # idempotente
+        self.assertEqual(self._esquema(), self.ESPERADO)
+        self.assertTrue(ids <= set(Mesa.objects.values_list("pk", flat=True)))  # ninguna mesa se borró
+        self.assertEqual(set(Mesa.objects.values_list("tarifa_hora", flat=True)), {15000})
+
+    def test_no_reasigna_una_mesa_que_ya_tiene_reservas(self):
+        from .models import Mesa
+
+        self._mesas_de_ejemplo()
+        mesa5 = Mesa.objects.get(nombre="Mesa 5")  # hoy es de pool y tiene una reserva
+        ini = disp.instante(date.today() + timedelta(days=3), 600)
+        Reserva.objects.create(mesa=mesa5, modalidad="pool", inicio=ini, fin=ini + timedelta(hours=1), nombre="Ana",
+                               celular="3000000001", correo="a@ejemplo.test")
+        self._migrar()
+        mesa5.refresh_from_db()
+        self.assertEqual(mesa5.modalidad, "pool")  # no se toca: la decide el club
+        self.assertEqual(Mesa.objects.count(), 7)
+
+    def test_con_nombres_propios_solo_completa_la_cantidad(self):
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        for i, (n, mod) in enumerate([("Tres bandas A", "carambola"), ("Tres bandas B", "carambola"), ("Pool 1", "pool")], 1):
+            Mesa.objects.create(nombre=n, modalidad=mod, orden=i)
+        self._migrar()
         self.assertEqual(Mesa.objects.filter(modalidad="carambola").count(), 5)
         self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
-        self.assertTrue(antes <= set(Mesa.objects.values_list("pk", "nombre", "modalidad")))  # nada borrado ni renombrado
-        self.assertEqual(Mesa.objects.exclude(tarifa_hora=15000).count(), 0)
-        self.assertEqual(len(set(Mesa.objects.values_list("nombre", flat=True))), 7)  # sin nombres repetidos
+        self.assertTrue(Mesa.objects.filter(nombre="Tres bandas A", modalidad="carambola").exists())  # intactas
 
     def test_migracion_no_crea_mesas_si_no_hay_ninguna(self):
         from .models import Mesa
