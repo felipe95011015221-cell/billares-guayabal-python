@@ -10,6 +10,6 @@
       <span>{{ clase.duracion_texto }}</span>
       <span>{% if clase.proximas %}Próxima: {{ clase.proximas.0.inicio|fecha_corta }}{% else %}Horarios por publicar{% endif %}</span>
     </div>
-    {% if not clase.confirmada %}<p class="text-sm text-oro-oscuro">Programa propuesto · por confirmar</p>{% endif %}
+    <p class="text-sm text-oro-oscuro">Horarios e inscripción por WhatsApp</p>
   </div>
 </a>

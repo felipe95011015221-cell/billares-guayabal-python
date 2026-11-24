@@ -3,7 +3,7 @@
 {% include "club/parciales/encabezado_pagina.html" with eyebrow="Escuela de billar" titulo='Clases de billar en Medellín' texto="Programas por niveles para aprender desde cero o llevar tu juego al siguiente nivel, en carambola a tres bandas y pool." foto=negocio.FOTOS.mano_taco %}
 <section class="seccion tono-claro claro !pt-16">
   <div class="contenedor">
-    {% if hay_propuestas %}<div class="aviso mb-14 max-w-3xl text-carbon/80"><p>Estos programas son una <strong>propuesta inicial</strong> y están pendientes de confirmación por el club. Instructores, precios y horarios definitivos se publicarán al aprobarse. Puedes pre-inscribirte para que te contactemos.</p></div>{% endif %}
+    <div class="aviso mb-14 flex max-w-3xl flex-col gap-4 text-carbon/85 sm:flex-row sm:items-center sm:justify-between"><p>Para conocer horarios, valores e inscripción, <strong>escríbenos por WhatsApp</strong> al {{ negocio.TELEFONO.valor }}.</p><a href="{{ wa_clases }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="escuela_aviso" class="btn btn-md btn-whatsapp shrink-0">{% include "club/parciales/icono_whatsapp.html" with clase="h-4 w-4" %}Escribir por WhatsApp</a></div>
     {% if clases|length > 1 %}
     <nav aria-label="Programas de la escuela" class="mb-14">
       <p class="mb-3 text-sm font-semibold text-carbon/75">Ir a un programa</p>
@@ -20,7 +20,7 @@
         <li><a href="#{{ c.slug }}" class="grid grid-cols-[5.5rem_1fr_auto] items-center gap-4 py-4 hover:bg-carbon/[0.03] sm:grid-cols-[9rem_1fr_auto]">
           <span class="text-sm font-semibold">{{ s.inicio|fecha_corta }}</span>
           <span><span class="block font-display text-xl leading-tight">{{ c.titulo }}</span><span class="text-sm text-carbon/75">{{ s.inicio|hora }}</span></span>
-          <span class="text-sm text-carbon/75">{% if s.disponibles > 0 %}{{ s.disponibles }} cupos{% else %}Lleno{% endif %}</span>
+          <span class="text-sm text-carbon/75">{% if s.disponibles > 0 %}{{ s.disponibles }} cupo{{ s.disponibles|pluralize }}{% else %}Lleno{% endif %}</span>
         </a></li>
         {% endfor %}
       </ul>
@@ -30,16 +30,16 @@
       {% for c in clases %}
       <article id="{{ c.slug }}" class="revelar grid scroll-mt-28 gap-10 rounded-3xl border border-carbon/10 bg-[#fafbf8] p-7 sm:p-10 lg:grid-cols-12">
         <div class="lg:col-span-5">
-          <div class="flex flex-wrap gap-2"><span class="insignia insignia-verde">{{ c.nivel }}</span><span class="insignia insignia-verde">{{ c.get_modalidad_display }}</span>{% if not c.confirmada %}<span class="insignia insignia-alerta !text-oro-oscuro">Propuesta · por confirmar</span>{% endif %}</div>
+          <div class="flex flex-wrap gap-2"><span class="insignia insignia-verde">{{ c.nivel }}</span><span class="insignia insignia-verde">{{ c.get_modalidad_display }}</span></div>
           
           <h2 class="mt-6 font-display text-4xl sm:text-5xl">{{ c.titulo }}</h2>
           <p class="mt-4 leading-relaxed text-carbon/70">{{ c.descripcion }}</p>
           <dl class="mt-8 grid grid-cols-2 gap-5 text-sm">
             <div><dt class="text-sm font-semibold text-carbon/75">Duración</dt><dd class="mt-1">{{ c.duracion_texto }}</dd></div>
             <div><dt class="text-sm font-semibold text-carbon/75">Nivel</dt><dd class="mt-1">{{ c.nivel }}</dd></div>
-            <div><dt class="text-sm font-semibold text-carbon/75">Instructor</dt><dd class="mt-1">{% if c.instructor and c.instructor.activo %}{{ c.instructor.nombre }}{% else %}Por definir{% endif %}</dd></div>
-            <div><dt class="text-sm font-semibold text-carbon/75">Precio</dt><dd class="mt-1">{{ c.precio|cop }}</dd></div>
-            <div><dt class="text-sm font-semibold text-carbon/75">Cupos</dt><dd class="mt-1">{% if c.proximas %}{{ c.cupos_libres }} disponibles{% else %}Por definir{% endif %}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Instructor</dt><dd class="mt-1">{% if c.instructor and c.instructor.activo %}{{ c.instructor.nombre }}{% else %}Consúltalo por WhatsApp{% endif %}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Precio</dt><dd class="mt-1">{{ c.precio|cop:"Consúltalo por WhatsApp" }}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Cupos</dt><dd class="mt-1">{% if c.proximas %}{{ c.cupos_libres }} disponibles{% else %}Consúltalo por WhatsApp{% endif %}</dd></div>
           </dl>
         </div>
         <div class="lg:col-span-6 lg:col-start-7">

@@ -1,7 +1,7 @@
 """
 Carga los datos iniciales del club (idempotente: no duplica si ya existen).
 
-  python manage.py cargar_datos_iniciales            # producción: mesas de ejemplo, clases propuestas, galería
+  python manage.py cargar_datos_iniciales            # producción: las 7 mesas del club, clases, galería
   python manage.py cargar_datos_iniciales --demo     # además, reservas y un torneo FICTICIOS para probar (solo desarrollo)
 """
 from datetime import timedelta
@@ -13,8 +13,11 @@ from club import negocio
 from club.disponibilidad import hoy_bogota, instante
 from club.models import Ajustes, Bloqueo, Clase, FotoGaleria, InscripcionTorneo, Mesa, Partido, Promocion, Reserva, SesionClase, Torneo
 
-MESAS_EJEMPLO = [("Mesa 1", "carambola"), ("Mesa 2", "carambola"), ("Mesa 3", "carambola"), ("Mesa 4", "carambola"),
-                 ("Mesa 5", "pool"), ("Mesa 6", "pool")]
+# Inventario confirmado por el propietario (23 nov. 2026): 5 mesas de carambola a tres bandas y 2 de pool.
+# Los nombres son genéricos; se pueden renombrar en el panel. Tarifa por hora confirmada: COP 15.000.
+MESAS_CLUB = [("Mesa 1", "carambola"), ("Mesa 2", "carambola"), ("Mesa 3", "carambola"), ("Mesa 4", "carambola"),
+              ("Mesa 5", "carambola"), ("Mesa 6", "pool"), ("Mesa 7", "pool")]
+TARIFA_HORA = 15000
 
 CLASES_PROPUESTAS = [
     ("Iniciación al billar", "ambas", "Iniciación", 90, "Postura, puente, agarre del taco y primeros golpes. Para quien nunca ha jugado o quiere empezar con buenas bases."),
@@ -27,7 +30,7 @@ CLASES_PROPUESTAS = [
 
 
 class Command(BaseCommand):
-    help = "Carga mesas de ejemplo, clases propuestas y la galería inicial."
+    help = "Carga las mesas del club, las clases y la galería inicial."
 
     def add_arguments(self, parser):
         parser.add_argument("--demo", action="store_true", help="Agrega datos ficticios para probar (no usar en producción).")
@@ -35,9 +38,9 @@ class Command(BaseCommand):
     def handle(self, *args, demo=False, **opts):
         Ajustes.actual()
         if not Mesa.objects.exists():
-            for i, (nombre, modalidad) in enumerate(MESAS_EJEMPLO, 1):
-                Mesa.objects.create(nombre=nombre, modalidad=modalidad, orden=i)
-            self.stdout.write("· 6 mesas de ejemplo (inventario por confirmar)")
+            for i, (nombre, modalidad) in enumerate(MESAS_CLUB, 1):
+                Mesa.objects.create(nombre=nombre, modalidad=modalidad, orden=i, tarifa_hora=TARIFA_HORA)
+            self.stdout.write("· 7 mesas del club: 5 de carambola y 2 de pool (COP 15.000 la hora)")
         if not Clase.objects.exists():
             for i, (titulo, modalidad, nivel, dur, desc) in enumerate(CLASES_PROPUESTAS):
                 Clase.objects.create(titulo=titulo, modalidad=modalidad, nivel=nivel, duracion_min=dur, descripcion=desc, orden=i)

@@ -18,6 +18,9 @@ from .models import (Ajustes, Clase, FotoGaleria, InscripcionClase, InscripcionT
 
 
 class PromocionesTests(TestCase):
+    def setUp(self):
+        Promocion.objects.all().delete()  # la migración 0004 deja la promoción real del club; estas pruebas parten de cero
+
     def test_vigencia_texto(self):
         self.assertEqual(Promocion().vigencia_texto, "")
         self.assertEqual(Promocion(vigencia_desde=date(2026, 12, 1), vigencia_hasta=date(2026, 12, 24)).vigencia_texto,
@@ -245,3 +248,124 @@ class JsReservasTests(TestCase):
         self.assertIn('typeof window.evento === "function"', js)
         self.assertNotIn("transition-all", js)
         self.assertNotIn("uppercase", js)
+
+
+class MigracionDatosConfirmadosTests(TestCase):
+    """La migración 0004 carga la tarifa y la promoción confirmadas, una vez y sin pisar ediciones."""
+
+    def _migrar(self):
+        import importlib
+
+        from django.apps import apps
+
+        importlib.import_module("club.migrations.0004_tarifa_y_promocion_confirmadas").cargar(apps, None)
+
+    def test_asigna_tarifa_solo_a_mesas_sin_tarifa(self):
+        from .models import Mesa
+
+        sin = Mesa.objects.create(nombre="A", modalidad="carambola")
+        con = Mesa.objects.create(nombre="B", modalidad="pool", tarifa_hora=20000)
+        self._migrar()
+        sin.refresh_from_db(); con.refresh_from_db()
+        self.assertEqual(sin.tarifa_hora, 15000)
+        self.assertEqual(con.tarifa_hora, 20000)  # lo editado en el panel no se pisa
+
+    def test_promocion_unica_y_visible_en_inicio(self):
+        Promocion.objects.all().delete()
+        self._migrar(); self._migrar()
+        self.assertEqual(Promocion.objects.count(), 1)
+        p = Promocion.objects.get()
+        self.assertTrue(p.activa)
+        self.assertIn("7.500", p.titulo)
+        self.assertEqual(p.descripcion, "Antes de las 3 p. m., de lunes a viernes.")
+        html = self.client.get("/").content.decode()
+        self.assertIn("7.500", html)
+        self.assertIn("lunes a viernes", html)
+
+    def test_escuela_dirige_a_whatsapp(self):
+        html = self.client.get("/escuela/").content.decode()
+        self.assertIn("escríbenos por WhatsApp", html)
+        self.assertNotIn("propuesta inicial", html)
+        self.assertNotIn("por confirmar", html.lower().split("<footer")[0].replace("horario por confirmar", ""))
+
+
+class InventarioDeMesasTests(TestCase):
+    """Inventario confirmado: 5 mesas de carambola y 2 de pool, a COP 15.000 la hora."""
+
+    def _migrar(self):
+        import importlib
+
+        from django.apps import apps
+
+        importlib.import_module("club.migrations.0004_tarifa_y_promocion_confirmadas").cargar(apps, None)
+
+    def test_comando_crea_7_mesas_con_tarifa(self):
+        from django.core.management import call_command
+
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        call_command("cargar_datos_iniciales", verbosity=0)
+        self.assertEqual(Mesa.objects.filter(modalidad="carambola").count(), 5)
+        self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
+        self.assertEqual(set(Mesa.objects.values_list("tarifa_hora", flat=True)), {15000})
+
+    def _esquema(self):
+        from .models import Mesa
+
+        return [(m.nombre, m.modalidad) for m in Mesa.objects.order_by("orden", "id")]
+
+    ESPERADO = [("Mesa 1", "carambola"), ("Mesa 2", "carambola"), ("Mesa 3", "carambola"), ("Mesa 4", "carambola"),
+                ("Mesa 5", "carambola"), ("Mesa 6", "pool"), ("Mesa 7", "pool")]
+
+    def _mesas_de_ejemplo(self):
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        for i, mod in enumerate(["carambola"] * 4 + ["pool"] * 2, 1):  # lo que hoy hay en producción
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, orden=i)
+
+    def test_migracion_deja_mesa_1_a_5_carambola_y_6_y_7_pool(self):
+        from .models import Mesa
+
+        self._mesas_de_ejemplo()
+        ids = set(Mesa.objects.values_list("pk", flat=True))
+        self._migrar(); self._migrar()  # idempotente
+        self.assertEqual(self._esquema(), self.ESPERADO)
+        self.assertTrue(ids <= set(Mesa.objects.values_list("pk", flat=True)))  # ninguna mesa se borró
+        self.assertEqual(set(Mesa.objects.values_list("tarifa_hora", flat=True)), {15000})
+
+    def test_no_reasigna_una_mesa_que_ya_tiene_reservas(self):
+        from .models import Mesa
+
+        self._mesas_de_ejemplo()
+        mesa5 = Mesa.objects.get(nombre="Mesa 5")  # hoy es de pool y tiene una reserva
+        ini = disp.instante(date.today() + timedelta(days=3), 600)
+        Reserva.objects.create(mesa=mesa5, modalidad="pool", inicio=ini, fin=ini + timedelta(hours=1), nombre="Ana",
+                               celular="3000000001", correo="a@ejemplo.test")
+        self._migrar()
+        mesa5.refresh_from_db()
+        self.assertEqual(mesa5.modalidad, "pool")  # no se toca: la decide el club
+        self.assertEqual(Mesa.objects.count(), 7)
+
+    def test_con_nombres_propios_solo_completa_la_cantidad(self):
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        for i, (n, mod) in enumerate([("Tres bandas A", "carambola"), ("Tres bandas B", "carambola"), ("Pool 1", "pool")], 1):
+            Mesa.objects.create(nombre=n, modalidad=mod, orden=i)
+        self._migrar()
+        self.assertEqual(Mesa.objects.filter(modalidad="carambola").count(), 5)
+        self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
+        self.assertTrue(Mesa.objects.filter(nombre="Tres bandas A", modalidad="carambola").exists())  # intactas
+
+    def test_migracion_no_crea_mesas_si_no_hay_ninguna(self):
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        self._migrar()
+        self.assertEqual(Mesa.objects.count(), 0)  # las crea cargar_datos_iniciales
+
+    def test_aviso_de_reservas_ya_no_dice_inventario_pendiente(self):
+        html = self.client.get("/reservas/").content.decode()
+        self.assertNotIn("pendientes de confirmación", html)
