@@ -1,19 +1,19 @@
 {% extends "club/base.html" %}{% load club_tags %}
 {% block contenido %}
 {% url 'consultar' as url_consultar %}
-{% include "club/parciales/encabezado_pagina.html" with eyebrow="Reservas" titulo='Reserva tu <em class="text-oro">mesa.</em>' texto="Elige modalidad, fecha y hora. Verificamos la disponibilidad real de cada mesa antes de registrar tu solicitud." foto=negocio.FOTOS.tiro_mesa_verde enlace_url=url_consultar enlace_texto="¿Ya reservaste? Consulta tu reserva →" %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Reservas" titulo='Reserva tu mesa de billar en Medellín' texto="Elige modalidad, fecha y hora. Verificamos la disponibilidad real de cada mesa antes de registrar tu solicitud." foto=negocio.FOTOS.tiro_mesa_verde enlace_url=url_consultar enlace_texto="¿Ya reservaste? Consulta tu reserva" %}
 <section class="seccion tono-oscuro !pt-6">
   <div class="contenedor">
-    <div class="aviso mb-10 max-w-3xl"><p>El inventario de mesas y las tarifas mostradas son configurables y están <strong>pendientes de confirmación</strong> por el club.{% if ajustes.modo_reserva == "manual" %} Las reservas en línea son solicitudes: quedan aprobadas solo cuando el club las confirma.{% endif %}</p></div>
+    <div class="aviso mb-8 max-w-3xl"><p>El inventario de mesas y las tarifas mostradas son configurables y están <strong>pendientes de confirmación</strong> por el club.{% if ajustes.modo_reserva == "manual" %} Las reservas en línea son solicitudes: quedan aprobadas solo cuando el club las confirma.{% endif %}</p></div>
 
     <div id="asistente" class="scroll-mt-28">
       <ol id="pasos" class="mb-10 grid grid-cols-4 gap-2" aria-label="Pasos de la reserva">
-        <li data-paso-ind="0"><span class="block h-0.5 rounded-full bg-oro"></span><span class="mt-3 hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] sm:block">01 · Modalidad</span></li>
-        <li data-paso-ind="1"><span class="block h-0.5 rounded-full bg-marfil/15"></span><span class="mt-3 hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] sm:block">02 · Fecha y hora</span></li>
-        <li data-paso-ind="2"><span class="block h-0.5 rounded-full bg-marfil/15"></span><span class="mt-3 hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] sm:block">03 · Mesa</span></li>
-        <li data-paso-ind="3"><span class="block h-0.5 rounded-full bg-marfil/15"></span><span class="mt-3 hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] sm:block">04 · Tus datos</span></li>
+        <li data-paso-ind="0"><span class="block h-0.5 rounded-full bg-oro"></span><span class="mt-3 hidden text-sm font-semibold sm:block">01 · Modalidad</span></li>
+        <li data-paso-ind="1"><span class="block h-0.5 rounded-full bg-marfil/15"></span><span class="mt-3 hidden text-sm font-semibold sm:block">02 · Fecha y hora</span></li>
+        <li data-paso-ind="2"><span class="block h-0.5 rounded-full bg-marfil/15"></span><span class="mt-3 hidden text-sm font-semibold sm:block">03 · Mesa</span></li>
+        <li data-paso-ind="3"><span class="block h-0.5 rounded-full bg-marfil/15"></span><span class="mt-3 hidden text-sm font-semibold sm:block">04 · Tus datos</span></li>
       </ol>
-      <p id="paso-movil" class="-mt-6 mb-8 text-[0.68rem] uppercase tracking-[0.18em] text-oro sm:hidden">Paso 1 de 4 · Modalidad</p>
+      <p id="paso-movil" class="-mt-6 mb-8 text-sm text-oro sm:hidden">Paso 1 de 4 · Modalidad</p>
 
       <div class="grid gap-10 lg:grid-cols-12">
         <div class="lg:col-span-8">
@@ -21,8 +21,8 @@
           <div data-paso="0">
             <h2 class="font-display text-4xl">¿Qué vas a jugar?</h2>
             <div class="mt-8 grid gap-4 sm:grid-cols-2">
-              <button type="button" data-modalidad="carambola" class="rounded-2xl border border-marfil/15 p-7 text-left transition hover:-translate-y-0.5 hover:border-oro/60"><span class="block font-display text-3xl">Carambola</span><span class="mt-1 block text-sm text-marfil/60">Tres bandas · mesa sin buchacas</span></button>
-              <button type="button" data-modalidad="pool" class="rounded-2xl border border-marfil/15 p-7 text-left transition hover:-translate-y-0.5 hover:border-oro/60"><span class="block font-display text-3xl">Pool</span><span class="mt-1 block text-sm text-marfil/60">Mesa con buchacas · bola 8 y bola 9</span></button>
+              <button type="button" data-modalidad="carambola" class="rounded-2xl border border-marfil/25 p-7 text-left transition-[transform,border-color,background-color] duration-300 hover:-translate-y-0.5 hover:border-oro hover:bg-marfil/5"><span class="block font-display text-3xl">Carambola</span><span class="mt-1 block text-sm text-marfil/75">Tres bandas · mesa sin buchacas</span></button>
+              <button type="button" data-modalidad="pool" class="rounded-2xl border border-marfil/25 p-7 text-left transition-[transform,border-color,background-color] duration-300 hover:-translate-y-0.5 hover:border-oro hover:bg-marfil/5"><span class="block font-display text-3xl">Pool</span><span class="mt-1 block text-sm text-marfil/75">Mesa con buchacas · bola 8 y bola 9</span></button>
             </div>
           </div>
 
@@ -41,19 +41,19 @@
               <div>
                 <h2 class="mb-6 font-display text-3xl">Duración</h2>
                 <div id="duraciones" class="grid grid-cols-2 gap-2"></div>
-                <p class="mt-6 text-sm text-marfil/55">Las franjas se calculan en hora de Medellín (America/Bogotá).</p>
+                <p class="mt-6 text-sm text-marfil/75">Las franjas se calculan en hora de Medellín (America/Bogotá).</p>
               </div>
             </div>
             <div>
               <h2 class="mb-5 font-display text-3xl">Hora de inicio</h2>
-              <div id="franjas"><p class="rounded-xl border border-dashed border-marfil/15 p-6 text-sm text-marfil/55">Selecciona una fecha para ver las horas disponibles.</p></div>
+              <div id="franjas"><p class="rounded-xl border border-dashed border-marfil/15 p-6 text-sm text-marfil/75">Selecciona una fecha para ver las horas disponibles.</p></div>
             </div>
           </div>
 
           {# Paso 2: mesa #}
           <div data-paso="2" class="oculto">
-            <div class="flex items-end justify-between gap-4"><h2 class="font-display text-3xl sm:text-4xl">Escoge tu mesa</h2><button type="button" id="actualizar-mesas" class="text-xs uppercase tracking-[0.14em] text-marfil/55 hover:text-oro">↻ Actualizar</button></div>
-            <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[0.68rem] uppercase tracking-[0.12em] text-marfil/55" aria-label="Estados de las mesas">
+            <div class="flex items-end justify-between gap-4"><h2 class="font-display text-3xl sm:text-4xl">Escoge tu mesa</h2><button type="button" id="actualizar-mesas" class="enlace-texto shrink-0 px-2">Actualizar mesas</button></div>
+            <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-marfil/75" aria-label="Estados de las mesas">
               <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-[#5fbf8a]"></span>Disponible</li>
               <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-alerta"></span>Pendiente de confirmación</li>
               <li class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-oro"></span>Reservada</li>
@@ -70,16 +70,16 @@
           {# Paso 3: datos #}
           <form data-paso="3" id="form-reserva" novalidate class="oculto relative space-y-6">
             <h2 class="font-display text-3xl sm:text-4xl">Tus datos</h2>
-            <p class="text-sm text-marfil/60">Solo los usamos para gestionar tu reserva y contactarte sobre ella.</p>
+            <p class="text-sm text-marfil/75">Solo los usamos para gestionar tu reserva y contactarte sobre ella.</p>
             <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] h-0 w-0">
             <div><label class="etiqueta-campo" for="nombre">Nombre completo</label><input id="nombre" name="nombre" autocomplete="name" class="campo"><p data-error="nombre" class="error-campo oculto"></p></div>
             <div class="grid gap-6 sm:grid-cols-2">
               <div><label class="etiqueta-campo" for="celular">Celular</label><input id="celular" name="celular" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="300 123 4567" class="campo"><p data-error="celular" class="error-campo oculto"></p></div>
               <div><label class="etiqueta-campo" for="correo">Correo electrónico</label><input id="correo" name="correo" type="email" autocomplete="email" inputmode="email" class="campo"><p data-error="correo" class="error-campo oculto"></p></div>
             </div>
-            <label class="flex cursor-pointer gap-3 text-sm leading-relaxed opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#c5a36a]"><span>Autorizo el tratamiento de mis datos personales para gestionar esta reserva, según la <a href="{% url 'privacidad' %}" target="_blank" class="text-oro underline underline-offset-2">política de datos</a> (Ley 1581 de 2012).</span></label>
+            <label class="flex cursor-pointer gap-3 text-sm leading-relaxed opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#f2c230]"><span>Autorizo el tratamiento de mis datos personales para gestionar esta reserva, según la <a href="{% url 'privacidad' %}" target="_blank" class="text-oro underline underline-offset-2">política de datos</a> (Ley 1581 de 2012).</span></label>
             <p data-error="acepta_datos" class="error-campo oculto"></p>
-            <p class="rounded-xl border border-marfil/10 bg-marfil/[0.03] p-4 text-xs leading-relaxed text-marfil/60">{{ ajustes.politica }}</p>
+            <p class="rounded-xl border border-marfil/10 bg-marfil/[0.03] p-4 text-sm leading-relaxed text-marfil/75">{{ ajustes.politica }}</p>
             <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
               <button type="button" data-ir="2" class="btn btn-md btn-fantasma">‹ Cambiar mesa</button>
               <button type="submit" class="btn btn-lg btn-oro">{% if ajustes.modo_reserva == "manual" %}Enviar solicitud{% else %}Confirmar reserva{% endif %}</button>
@@ -89,20 +89,20 @@
           <div id="error-asistente" role="alert" class="oculto mt-6 rounded-xl border border-error/40 bg-error/10 p-4 text-sm"></div>
         </div>
 
-        <aside class="lg:col-span-4">
-          <div class="sticky top-28 rounded-2xl border border-marfil/10 bg-carbon-2 p-7">
-            <p class="eyebrow">Tu reserva</p>
+        <aside class="order-first lg:order-none lg:col-span-4">
+          <details data-abierto-lg class="group/res sticky top-28 rounded-2xl border border-marfil/15 bg-carbon-2 p-5 lg:p-7">
+            <summary class="eyebrow flex min-h-11 cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden justify-between lg:pointer-events-none lg:min-h-0"><span>Resumen de tu reserva</span><svg class="h-5 w-5 transition-transform duration-200 group-open/res:rotate-180 lg:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
             <dl class="mt-6 space-y-4 text-sm">
-              <div class="flex justify-between gap-4"><dt class="text-marfil/45">Modalidad</dt><dd id="r-modalidad" class="text-right">—</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-marfil/45">Fecha</dt><dd id="r-fecha" class="text-right first-letter:uppercase">—</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-marfil/45">Horario</dt><dd id="r-horario" class="text-right">—</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-marfil/45">Duración</dt><dd id="r-duracion" class="text-right">—</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-marfil/45">Mesa</dt><dd id="r-mesa" class="text-right">—</dd></div>
-              <div class="flex justify-between gap-4"><dt class="text-marfil/45">Valor estimado</dt><dd id="r-valor" class="text-right">—</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-marfil/75">Modalidad</dt><dd id="r-modalidad" class="text-right">—</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-marfil/75">Fecha</dt><dd id="r-fecha" class="text-right ">—</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-marfil/75">Horario</dt><dd id="r-horario" class="text-right">—</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-marfil/75">Duración</dt><dd id="r-duracion" class="text-right">—</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-marfil/75">Mesa</dt><dd id="r-mesa" class="text-right">—</dd></div>
+              <div class="flex justify-between gap-4"><dt class="text-marfil/75">Valor estimado</dt><dd id="r-valor" class="text-right">—</dd></div>
             </dl>
             <div class="linea-oro my-6"></div>
-            <p class="text-xs leading-relaxed text-marfil/55">{% if ajustes.modo_reserva == "manual" %}Tu solicitud quedará pendiente hasta que el club la confirme.{% else %}La disponibilidad se verifica de nuevo al confirmar.{% endif %}</p>
-          </div>
+            <p class="mt-1 text-sm leading-relaxed text-marfil/75">{% if ajustes.modo_reserva == "manual" %}Tu solicitud quedará pendiente hasta que el club la confirme.{% else %}La disponibilidad se verifica de nuevo al confirmar.{% endif %}</p>
+          </details>
         </aside>
       </div>
     </div>
@@ -110,18 +110,18 @@
     {# Resultado #}
     <div id="resultado" class="oculto mx-auto max-w-2xl scroll-mt-28 rounded-3xl border border-oro/30 bg-carbon-2 p-8 text-center sm:p-12">
       <h2 id="res-titulo" class="font-display text-4xl sm:text-5xl"></h2>
-      <p id="res-texto" class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-marfil/65"></p>
-      <div class="mx-auto mt-8 max-w-sm rounded-2xl border border-dashed border-oro/40 p-6"><p class="text-[0.65rem] uppercase tracking-[0.24em] text-marfil/50">Tu código</p><p id="res-codigo" class="mt-2 font-mono text-3xl tracking-[0.18em] text-oro"></p></div>
+      <p id="res-texto" class="mx-auto mt-4 max-w-md text-sm leading-relaxed text-marfil/75"></p>
+      <div class="mx-auto mt-8 max-w-sm rounded-2xl border border-dashed border-oro/40 p-6"><p class="text-sm text-marfil/75">Tu código</p><p id="res-codigo" class="mt-2 font-mono text-3xl tracking-[0.18em] text-oro"></p></div>
       <dl class="mx-auto mt-8 grid max-w-md grid-cols-2 gap-4 text-left text-sm">
-        <div><dt class="text-marfil/45">Mesa</dt><dd id="res-mesa"></dd></div>
-        <div><dt class="text-marfil/45">Valor estimado</dt><dd id="res-valor"></dd></div>
-        <div class="col-span-2"><dt class="text-marfil/45">Fecha y hora</dt><dd id="res-fecha" class="first-letter:uppercase"></dd></div>
+        <div><dt class="text-marfil/75">Mesa</dt><dd id="res-mesa"></dd></div>
+        <div><dt class="text-marfil/75">Valor estimado</dt><dd id="res-valor"></dd></div>
+        <div class="col-span-2"><dt class="text-marfil/75">Fecha y hora</dt><dd id="res-fecha" class=""></dd></div>
       </dl>
       <div class="mt-10 grid gap-3 sm:grid-cols-2">
         <a id="res-compartir" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-md btn-contorno">Compartir</a>
         <a id="res-avisar" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-md btn-oro">Avisar al club</a>
       </div>
-      <a href="{% url 'consultar' %}" class="mt-6 inline-block text-xs uppercase tracking-[0.16em] text-marfil/55 hover:text-oro">Consultar mis reservas →</a>
+      <a href="{% url 'consultar' %}" class="enlace-texto mt-4">Consultar mis reservas</a>
     </div>
   </div>
 </section>

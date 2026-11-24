@@ -1,15 +1,15 @@
 {% load club_tags %}
-<section class="relative isolate overflow-hidden py-32 text-marfil sm:py-44">
-  <img src="{{ negocio.FOTOS.salon_mesas.archivo|img }}" alt="" loading="lazy" class="absolute inset-0 -z-10 h-full w-full object-cover">
+<section class="relative isolate overflow-hidden py-24 text-marfil sm:py-32">
+  <img src="{{ negocio.FOTOS.salon_mesas.archivo|img }}" alt="" width="{{ negocio.FOTOS.salon_mesas.ancho }}" height="{{ negocio.FOTOS.salon_mesas.alto }}" loading="lazy" class="absolute inset-0 -z-10 h-full w-full object-cover">
   <div class="absolute inset-0 -z-10 bg-carbon/75"></div>
-  <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgb(17_23_20/0.9)_75%)]"></div>
+  <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgb(10_27_52/0.9)_75%)]"></div>
   <div class="contenedor revelar text-center">
     <p class="eyebrow mb-8 justify-center">Reserva en minutos</p>
-    <h2 class="mx-auto max-w-4xl font-display text-5xl leading-[0.95] sm:text-7xl lg:text-8xl">{{ titulo|default:"Tu próxima partida comienza aquí." }}</h2>
-    <div class="mt-12 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-      <a href="{% url 'reservas' %}" class="btn btn-lg btn-oro">Reservar una mesa</a>
-      <a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" class="btn btn-lg btn-contorno">Escribir por WhatsApp</a>
+    <h2 class="mx-auto max-w-4xl font-display text-5xl leading-[0.95] sm:text-7xl">{{ titulo|default:"Tu próxima partida comienza aquí." }}</h2>
+    <div class="mt-10 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+      <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="cta_final" class="btn btn-lg btn-oro">Reservar una mesa</a>
+      <a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="cta_final" class="btn btn-lg btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Escribir por WhatsApp</a>
     </div>
   </div>
-  <span class="pointer-events-none absolute bottom-3 right-4 text-[0.58rem] uppercase tracking-[0.16em] text-marfil/40">Foto de referencia</span>
+  <span class="pointer-events-none absolute bottom-3 right-4 text-xs text-marfil/70">Foto de referencia</span>
 </section>

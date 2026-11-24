@@ -1,85 +1,81 @@
 {% extends "club/base.html" %}{% load static club_tags %}
 {% block contenido %}
-{# ---------- HERO ---------- #}
-<section class="relative isolate flex min-h-[100svh] items-end overflow-hidden bg-carbon pb-20 pt-32 text-marfil sm:items-center sm:pb-0">
+{# ---------- HERO: promesa, CTA principal (reservar) y secundario (WhatsApp) + datos del club ---------- #}
+<section class="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-carbon text-marfil">
   <div class="absolute inset-0 -z-10">
-    <img src="{{ negocio.FOTOS.hero_salon.archivo|img }}" alt="{{ negocio.FOTOS.hero_salon.alt }}" fetchpriority="high" class="hero-zoom absolute inset-0 h-full w-full object-cover object-[60%_center]">
-    <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/40 to-carbon/30"></div>
-    <div class="absolute inset-0 bg-gradient-to-r from-carbon/85 via-carbon/30 to-transparent"></div>
+    <img src="{{ negocio.FOTOS.hero_salon.archivo|img }}" alt="{{ negocio.FOTOS.hero_salon.alt }}" width="{{ negocio.FOTOS.hero_salon.ancho }}" height="{{ negocio.FOTOS.hero_salon.alto }}" fetchpriority="high" class="hero-zoom absolute inset-0 h-full w-full object-cover object-[60%_center]">
+    <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/30 to-carbon/20"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-carbon/90 via-carbon/45 to-transparent"></div>
   </div>
-  <div class="mx-auto grid w-full max-w-7xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14 lg:px-12">
-    <div>
-      <img src="{% static 'club/img/logo.webp' %}" alt="Club de Billares Guayabal" width="900" height="758" class="entrar mb-8 h-32 w-auto drop-shadow-[0_12px_30px_rgb(0_0_0/0.6)] sm:h-40 lg:hidden">
-      <p class="eyebrow entrar mb-8" style="animation-delay:.2s">Club de Billares Guayabal · Medellín</p>
-      <h1 class="max-w-5xl font-display text-[clamp(3rem,9vw,7rem)] font-medium uppercase leading-[0.88] tracking-[-0.02em]">
-        {% for palabra in titulo_hero.split %}<span class="inline-block overflow-hidden pb-[0.08em] align-bottom"><span class="palabra {% if forloop.last %}italic normal-case text-oro{% endif %}" style="animation-delay: {{ forloop.counter0 }}00ms">{{ palabra }}</span></span>{% if not forloop.last %} {% endif %}{% endfor %}
+  <div class="relative flex flex-1 items-end pb-12 pt-32 sm:items-center sm:pb-16">
+    <div class="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+      <p class="eyebrow entrar mb-6" style="animation-delay:.2s">Guayabal, Medellín</p>
+      <h1 class="max-w-[14ch] font-display text-[clamp(3.2rem,10vw,9rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
+        {% for palabra in titulo_hero.split %}<span class="inline-block overflow-hidden pb-[0.1em] align-bottom"><span class="palabra" style="animation-delay: {{ forloop.counter0 }}00ms">{{ palabra }}</span></span>{% if not forloop.last %} {% endif %}{% endfor %}
       </h1>
-      <p class="entrar mt-8 max-w-xl text-base leading-relaxed text-marfil/80 sm:text-lg" style="animation-delay:.95s">{{ subtitulo_hero }}</p>
-      <div class="entrar mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4" style="animation-delay:1.15s">
-        <a href="{% url 'reservas' %}" class="btn btn-lg btn-oro">Reservar una mesa</a>
-        <a href="{% url 'club' %}" class="btn btn-lg btn-contorno">Explorar el club</a>
+      <div class="marcador marcador-entra mt-8 max-w-md text-marfil" aria-hidden="true"></div>
+      <p class="entrar mt-7 max-w-xl text-lg leading-relaxed text-marfil/90 sm:text-xl" style="animation-delay:.95s">{{ subtitulo_hero }}</p>
+      <div class="entrar mt-9 flex flex-col gap-3 sm:flex-row sm:gap-4" style="animation-delay:1.15s">
+        <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="hero" class="btn btn-lg btn-oro">Reservar una mesa</a>
+        <a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="hero" class="btn btn-lg btn-contorno">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Escribir por WhatsApp</a>
       </div>
     </div>
-    <div class="entrar relative hidden lg:block" style="animation-delay:.5s">
-      <div class="absolute inset-8 -z-10 rounded-full bg-oro/15 blur-3xl" aria-hidden="true"></div>
-      <img src="{% static 'club/img/logo.webp' %}" alt="Club de Billares Guayabal" width="900" height="758" class="h-auto w-[clamp(300px,30vw,420px)] drop-shadow-[0_30px_60px_rgb(0_0_0/0.7)]">
-    </div>
+    <span class="pointer-events-none absolute bottom-3 right-4 text-sm text-marfil/70">Foto de referencia</span>
   </div>
-  <a href="#club" aria-label="Bajar a la presentación del club" class="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 text-[0.62rem] uppercase tracking-[0.3em] text-marfil/50 sm:flex">Descubrir<span class="animate-bounce text-oro">↓</span></a>
-  <span class="pointer-events-none absolute bottom-3 right-4 text-[0.58rem] uppercase tracking-[0.16em] text-marfil/40">Foto de referencia</span>
-</section>
 
-{# ---------- EL CLUB ---------- #}
-<section id="club" class="seccion tono-claro claro">
-  <div class="contenedor">
-    <div class="grid items-center gap-14 lg:grid-cols-12 lg:gap-20">
-      <div class="revelar lg:col-span-5">
-        <p class="eyebrow mb-6">El club</p>
-        <h2 class="titulo-seccion">Cada partida tiene <em class="text-verde">su historia.</em></h2>
-        <div class="texto-seccion">
-          <p>Club de Billares Guayabal es un punto de encuentro en Medellín para quienes disfrutan el billar: el que viene a jugar con amigos un viernes, el que entrena su tiro de tres bandas y el que busca rivales para medirse.</p>
-          <p class="mt-4">Aquí se juega, se compite, se aprende y se comparte. Cada mesa, una conversación distinta.</p>
-        </div>
-        <a href="{% url 'club' %}" class="btn btn-md btn-oscuro mt-10">Conoce el club →</a>
+  {# Datos reales del sitio: horario, ubicación, modalidades y reserva en línea #}
+  <div class="relative border-t border-marfil/15 bg-carbon/85 backdrop-blur-md">
+    <dl class="mx-auto grid w-full max-w-7xl grid-cols-1 gap-x-8 px-5 py-3 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-12">
+      <div class="dato-confianza">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <dt class="sr-only">Horario</dt><dd><b>{{ negocio.HORARIO.valor }}</b>{% if negocio.HORARIO.por_confirmar %}<span class="block text-oro">Horario por confirmar</span>{% endif %}</dd>
       </div>
-      <div class="revelar lg:col-span-7">
-        <div class="relative overflow-hidden rounded-sm bg-carbon shadow-[0_40px_80px_-40px_rgb(17_23_20/0.7)]" style="aspect-ratio: {{ jugador.ancho }}/{{ jugador.alto }}">
-          <img src="{{ jugador.archivo|img }}" alt="{{ jugador.alt }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover">
-        </div>
+      <div class="dato-confianza">
+        {% include "club/parciales/icono_ubicacion.html" with clase="" %}
+        <dt class="sr-only">Ubicación</dt><dd><b>{{ negocio.DIRECCION.valor }}</b>{% if negocio.DIRECCION.por_confirmar %}<span class="block text-oro">Dirección por confirmar</span>{% endif %}</dd>
       </div>
-    </div>
+      <div class="dato-confianza">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="14" r="5"/><circle cx="17" cy="8" r="3.5"/></svg>
+        <dt class="sr-only">Modalidades</dt><dd><b>Carambola a tres bandas y pool</b></dd>
+      </div>
+      <div class="dato-confianza">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <dt class="sr-only">Reservas</dt><dd><b>Reserva en línea</b><span>Disponibilidad real y código de reserva</span></dd>
+      </div>
+    </dl>
   </div>
 </section>
 
-{# ---------- MODALIDADES ---------- #}
+{# ---------- PROMOCIONES (solo si el club publicó alguna) ---------- #}
+{% if promociones %}{% include "club/parciales/promociones.html" %}{% endif %}
+
+{# ---------- MODALIDADES: reserva directa por tipo de mesa ---------- #}
 <section class="seccion tono-oscuro">
   <div class="contenedor">
-    <div class="revelar"><p class="eyebrow mb-6">Modalidades</p><h2 class="titulo-seccion">Domina la mesa. <span class="italic text-oro">Vive el juego.</span></h2></div>
-    <div class="mt-16 grid gap-6 md:grid-cols-2">
+    <div class="revelar"><p class="eyebrow mb-6">Modalidades</p><h2 class="titulo-seccion">Domina la mesa. Vive el juego.</h2></div>
+    <div class="mt-14 grid gap-6 md:grid-cols-2">
       {% with f1=negocio.FOTOS.jugador_salon f2=negocio.FOTOS.bolas_bokeh %}
       <article class="revelar">
-        <a href="{% url 'reservas' %}?modalidad=carambola" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
-          <img src="{{ f1.archivo|img }}" alt="{{ f1.alt }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
-          <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/40 to-transparent"></div>
+        <a href="{% url 'reservas' %}?modalidad=carambola" data-evento="cta_reservar" data-evento-origen="modalidad_carambola" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
+          <img src="{{ f1.archivo|img }}" alt="{{ f1.alt }}" width="{{ f1.ancho }}" height="{{ f1.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
+          <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/50 to-transparent"></div>
           <span class="foto-ref">Foto de referencia</span>
           <div class="absolute inset-x-0 bottom-0 p-7 sm:p-10">
-            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-oro">01</p>
-            <h3 class="mt-3 font-display text-4xl sm:text-5xl">Carambola a tres bandas</h3>
-            <p class="mt-4 max-w-md text-sm leading-relaxed text-marfil/70">Tres bolas, una mesa sin buchacas y la exigencia de tocar al menos tres bandas antes de la carambola. Geometría, paciencia y control.</p>
-            <span class="mt-6 inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-oro">Reservar mesa de carambola →</span>
+            <h3 class="font-display text-4xl sm:text-5xl">Carambola a tres bandas</h3>
+            <p class="mt-4 max-w-md text-sm leading-relaxed text-marfil/80">Tres bolas, una mesa sin buchacas y la exigencia de tocar al menos tres bandas antes de la carambola. Geometría, paciencia y control.</p>
+            <span class="mt-5 inline-flex min-h-11 items-center rounded-full bg-oro px-5 text-sm font-bold text-carbon">Reservar mesa de carambola</span>
           </div>
         </a>
       </article>
       <article class="revelar">
-        <a href="{% url 'reservas' %}?modalidad=pool" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
-          <img src="{{ f2.archivo|img }}" alt="{{ f2.alt }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
-          <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/40 to-transparent"></div>
+        <a href="{% url 'reservas' %}?modalidad=pool" data-evento="cta_reservar" data-evento-origen="modalidad_pool" class="group relative block aspect-[4/5] overflow-hidden rounded-sm sm:aspect-[5/4]">
+          <img src="{{ f2.archivo|img }}" alt="{{ f2.alt }}" width="{{ f2.ancho }}" height="{{ f2.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
+          <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/50 to-transparent"></div>
           <span class="foto-ref">Foto de referencia</span>
           <div class="absolute inset-x-0 bottom-0 p-7 sm:p-10">
-            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-oro">02</p>
-            <h3 class="mt-3 font-display text-4xl sm:text-5xl">Pool</h3>
-            <p class="mt-4 max-w-md text-sm leading-relaxed text-marfil/70">Ritmo ágil, buchacas y estrategia para dejar la siguiente bola servida. Ideal para jugar en grupo y para competir.</p>
-            <span class="mt-6 inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-oro">Reservar mesa de pool →</span>
+            <h3 class="font-display text-4xl sm:text-5xl">Pool</h3>
+            <p class="mt-4 max-w-md text-sm leading-relaxed text-marfil/80">Ritmo ágil, buchacas y estrategia para dejar la siguiente bola servida. Ideal para jugar en grupo y para competir.</p>
+            <span class="mt-5 inline-flex min-h-11 items-center rounded-full bg-oro px-5 text-sm font-bold text-carbon">Reservar mesa de pool</span>
           </div>
         </a>
       </article>
@@ -88,25 +84,76 @@
   </div>
 </section>
 
-{# ---------- RESERVAS ---------- #}
+{# ---------- RESERVAS: cómo funciona ---------- #}
 <section class="seccion textura-verde tono-verde">
   <div class="contenedor">
     <div class="grid gap-14 lg:grid-cols-12">
       <div class="revelar lg:col-span-5">
         <p class="eyebrow mb-6">Reservas en línea</p>
-        <h2 class="titulo-seccion">Tu mesa, <span class="italic text-oro">lista</span> cuando llegues.</h2>
+        <h2 class="titulo-seccion">Tu mesa, lista cuando llegues.</h2>
         <p class="texto-seccion">Consulta la disponibilidad real, escoge la mesa y envía tu solicitud en menos de dos minutos desde el celular.</p>
         <div class="mt-10 flex flex-col gap-3 sm:flex-row">
-          <a href="{% url 'reservas' %}" class="btn btn-lg btn-oro">Reservar una mesa</a>
+          <a href="{% url 'reservas' %}" data-evento="cta_reservar" data-evento-origen="como_funciona" class="btn btn-lg btn-oro">Reservar una mesa</a>
           <a href="{% url 'consultar' %}" class="btn btn-lg btn-contorno">Consultar mi reserva</a>
         </div>
       </div>
       <ol class="grid gap-4 lg:col-span-6 lg:col-start-7">
-        <li class="revelar flex gap-6 rounded-2xl border border-marfil/15 bg-carbon/20 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro/70">1</span><div><h3 class="font-display text-2xl">Elige tu juego</h3><p class="mt-2 text-sm text-marfil/70">Carambola o pool, fecha, hora y duración.</p></div></li>
-        <li class="revelar flex gap-6 rounded-2xl border border-marfil/15 bg-carbon/20 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro/70">2</span><div><h3 class="font-display text-2xl">Mira la disponibilidad</h3><p class="mt-2 text-sm text-marfil/70">Consultamos el estado real de cada mesa en el servidor.</p></div></li>
-        <li class="revelar flex gap-6 rounded-2xl border border-marfil/15 bg-carbon/20 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro/70">3</span><div><h3 class="font-display text-2xl">Recibe tu código</h3><p class="mt-2 text-sm text-marfil/70">Tu solicitud queda registrada con un código único.</p></div></li>
+        <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">1</span><div><h3 class="font-display text-2xl">Elige tu juego</h3><p class="mt-2 text-sm text-marfil/80">Carambola o pool, fecha, hora y duración.</p></div></li>
+        <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">2</span><div><h3 class="font-display text-2xl">Mira la disponibilidad</h3><p class="mt-2 text-sm text-marfil/80">Consultamos el estado real de cada mesa en el servidor.</p></div></li>
+        <li class="revelar flex gap-6 rounded-2xl border border-marfil/20 bg-carbon/25 p-6 sm:p-8"><span class="font-display text-5xl leading-none text-oro" aria-hidden="true">3</span><div><h3 class="font-display text-2xl">Recibe tu código</h3><p class="mt-2 text-sm text-marfil/80">Tu solicitud queda registrada con un código único.</p></div></li>
       </ol>
     </div>
+  </div>
+</section>
+
+{# ---------- EL CLUB ---------- #}
+<section id="club" class="seccion tono-claro claro">
+  <div class="contenedor">
+    <div class="grid items-center gap-14 lg:grid-cols-12 lg:gap-20">
+      <div class="revelar lg:col-span-5">
+        <p class="eyebrow mb-6">El club</p>
+        <h2 class="titulo-seccion">Cada partida tiene su historia.</h2>
+        <div class="texto-seccion">
+          <p>Club de Billares Guayabal es un punto de encuentro en Medellín para quienes disfrutan el billar: el que viene a jugar con amigos un viernes, el que entrena su tiro de tres bandas y el que busca rivales para medirse.</p>
+          <p class="mt-4">Aquí se juega, se compite, se aprende y se comparte. Cada mesa, una conversación distinta.</p>
+        </div>
+        <a href="{% url 'club' %}" class="btn btn-md btn-oscuro mt-10">Conoce el club</a>
+      </div>
+      <div class="revelar lg:col-span-7">
+        <div class="relative overflow-hidden rounded-sm bg-carbon shadow-[0_40px_80px_-40px_rgb(10_27_52/0.7)]" style="aspect-ratio: {{ jugador.ancho }}/{{ jugador.alto }}">
+          <img src="{{ jugador.archivo|img }}" alt="{{ jugador.alt }}" width="{{ jugador.ancho }}" height="{{ jugador.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ---------- TORNEOS Y EVENTOS ---------- #}
+<section class="seccion tono-oscuro">
+  <div class="contenedor">
+    <div class="revelar"><p class="eyebrow mb-6">Torneos y eventos</p><h2 class="titulo-seccion">Compite. Celebra. Comparte la mesa.</h2></div>
+    <div class="mt-14 grid gap-6 lg:grid-cols-3">
+      <div class="grid gap-6 md:grid-cols-2 lg:col-span-2">
+        {% for t in torneos %}<div class="revelar">{% include "club/parciales/tarjeta_torneo.html" %}</div>
+        {% empty %}
+        <div class="rounded-2xl border border-dashed border-current/30 px-6 py-14 text-center md:col-span-2">
+          <p class="font-display text-2xl">Próximos torneos por anunciar</p>
+          <p class="mx-auto mt-3 max-w-md text-sm opacity-80">Cuando el club publique un campeonato, aquí verás fechas, formato, cupos e inscripción en línea.</p>
+          <a href="{{ wa_torneos }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="torneos_vacio" class="btn btn-md btn-contorno mt-6">Avísenme por WhatsApp</a>
+        </div>
+        {% endfor %}
+      </div>
+      <a href="{% url 'eventos' %}" class="revelar group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-2xl p-8">
+        <img src="{{ negocio.FOTOS.triangulo_tacos.archivo|img }}" alt="" width="{{ negocio.FOTOS.triangulo_tacos.ancho }}" height="{{ negocio.FOTOS.triangulo_tacos.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
+        <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/70 to-carbon/10"></div>
+        <div class="relative">
+          <h3 class="font-display text-3xl">Eventos privados y empresariales</h3>
+          <p class="mt-2 text-sm text-marfil/80">Celebraciones, integraciones y jornadas recreativas, sujetas a disponibilidad.</p>
+          <span class="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-oro">Solicitar cotización</span>
+        </div>
+      </a>
+    </div>
+    <div class="mt-8"><a href="{% url 'torneos' %}" class="enlace-texto">Ver todos los torneos</a></div>
   </div>
 </section>
 
@@ -116,43 +163,14 @@
     <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
       <div class="revelar max-w-3xl">
         <p class="eyebrow mb-6">Escuela de billar</p>
-        <h2 class="titulo-seccion">La precisión se entrena. <em class="text-verde">La pasión se vive.</em></h2>
+        <h2 class="titulo-seccion">La precisión se entrena. La pasión se vive.</h2>
         <p class="texto-seccion">Programas por niveles para empezar desde cero o pulir tu técnica en carambola y pool.</p>
       </div>
       <a href="{% url 'escuela' %}" class="btn btn-md btn-oscuro shrink-0 self-start lg:self-auto">Ver programas</a>
     </div>
-    <div class="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {% for clase in clases %}<div class="revelar h-full">{% include "club/parciales/tarjeta_clase.html" with indice=forloop.counter %}</div>{% endfor %}
     </div>
-  </div>
-</section>
-
-{# ---------- TORNEOS Y EVENTOS ---------- #}
-<section class="seccion tono-oscuro">
-  <div class="contenedor">
-    <div class="revelar"><p class="eyebrow mb-6">Torneos y eventos</p><h2 class="titulo-seccion">Compite. Celebra. <span class="italic text-oro">Comparte la mesa.</span></h2></div>
-    <div class="mt-16 grid gap-6 lg:grid-cols-3">
-      <div class="grid gap-6 md:grid-cols-2 lg:col-span-2">
-        {% for t in torneos %}<div class="revelar">{% include "club/parciales/tarjeta_torneo.html" %}</div>
-        {% empty %}
-        <div class="rounded-2xl border border-dashed border-current/20 px-6 py-14 text-center md:col-span-2">
-          <p class="font-display text-2xl">Próximos torneos por anunciar</p>
-          <p class="mx-auto mt-3 max-w-md text-sm opacity-70">Cuando el club publique un campeonato, aquí verás fechas, formato, cupos e inscripción en línea.</p>
-          <a href="{{ wa_torneos }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-contorno mt-6">Avísenme por WhatsApp</a>
-        </div>
-        {% endfor %}
-      </div>
-      <a href="{% url 'eventos' %}" class="revelar group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-2xl p-8">
-        <img src="{{ negocio.FOTOS.triangulo_tacos.archivo|img }}" alt="" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.6s] group-hover:scale-105">
-        <div class="absolute inset-0 bg-gradient-to-t from-carbon via-carbon/60 to-carbon/10"></div>
-        <div class="relative">
-          <h3 class="font-display text-3xl">Eventos privados y empresariales</h3>
-          <p class="mt-2 text-sm text-marfil/70">Celebraciones, integraciones y jornadas recreativas, sujetas a disponibilidad.</p>
-          <span class="mt-5 inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-oro">Solicitar cotización →</span>
-        </div>
-      </a>
-    </div>
-    <div class="mt-10"><a href="{% url 'torneos' %}" class="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-oro hover:text-oro-claro">Ver todos los torneos →</a></div>
   </div>
 </section>
 
@@ -163,13 +181,13 @@
 <section class="seccion tono-carbon2 !py-20 sm:!py-28">
   <div class="contenedor">
     <div class="flex items-end justify-between gap-6">
-      <div class="revelar"><p class="eyebrow mb-6">Galería</p><h2 class="titulo-seccion">Así se vive <span class="italic text-oro">el club.</span></h2></div>
+      <div class="revelar"><p class="eyebrow mb-6">Galería</p><h2 class="titulo-seccion">Así se vive el club.</h2></div>
       <a href="{% url 'galeria' %}" class="btn btn-sm btn-contorno hidden sm:inline-flex">Ver galería</a>
     </div>
-    <div class="mt-14 grid gap-4 sm:grid-cols-2">
+    <div class="mt-12 grid gap-4 sm:grid-cols-2">
       {% for f in fotos_inicio %}
-      <a href="{% url 'galeria' %}" class="revelar group relative block aspect-[4/5] overflow-hidden rounded-sm">
-        <img src="{{ f.archivo|img }}" alt="{{ f.alt }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.4s] group-hover:scale-[1.04]">
+      <a href="{% url 'galeria' %}" aria-label="Ver la galería: {{ f.alt }}" class="revelar group relative block aspect-[4/5] overflow-hidden rounded-sm">
+        <img src="{{ f.archivo|img }}" alt="{{ f.alt }}" width="{{ f.ancho }}" height="{{ f.alto }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.4s] group-hover:scale-[1.04]">
         <span class="absolute inset-0 bg-gradient-to-t from-carbon/50 via-transparent to-transparent"></span>
       </a>
       {% endfor %}
@@ -181,7 +199,7 @@
 {# ---------- UBICACIÓN ---------- #}
 <section class="seccion tono-claro claro">
   <div class="contenedor">
-    <div class="revelar mb-14"><p class="eyebrow mb-6">Ubicación</p><h2 class="titulo-seccion">En el corazón de <em class="text-verde">Guayabal.</em></h2></div>
+    <div class="revelar mb-12"><p class="eyebrow mb-6">Ubicación</p><h2 class="titulo-seccion">En el corazón de Guayabal.</h2></div>
     <div class="revelar">{% include "club/parciales/ubicacion.html" %}</div>
   </div>
 </section>

@@ -1,0 +1,27 @@
+{# Contrato con Dev: recibe `promociones` (iterable; puede venir vacío) con .titulo, .descripcion, .vigencia_texto, .destacada, .enlace_url, .enlace_texto. #}
+{# Opcional: compacta=True reduce el espacio (p. ej. dentro de la página de reservas). No inventa promociones ni precios: todo sale del panel. #}
+{% if promociones %}
+<section id="promociones" aria-labelledby="promociones-titulo" class="seccion tono-claro claro {% if compacta %}!py-14 sm:!py-16 lg:!py-20{% endif %}">
+  <div class="contenedor">
+    <div class="revelar max-w-3xl">
+      <p class="eyebrow mb-6">Promociones</p>
+      <h2 id="promociones-titulo" class="titulo-seccion">Promociones del club</h2>
+    </div>
+    <ul class="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {% for p in promociones %}
+      <li class="revelar {% if p.destacada %}md:col-span-2 lg:col-span-1{% endif %}">
+        <article class="relative flex h-full flex-col rounded-2xl p-7 sm:p-8 {% if p.destacada %}textura-verde text-marfil shadow-[0_30px_60px_-30px_rgb(7_80_58/0.7)]{% else %}border border-carbon/15 bg-[#fafbf8] text-carbon{% endif %}">
+          {% if p.destacada %}<span class="insignia insignia-oro mb-5 self-start">Destacada</span>{% endif %}
+          <h3 class="font-display text-3xl leading-tight">{{ p.titulo }}</h3>
+          {% if p.descripcion %}<p class="mt-3 text-base leading-relaxed {% if p.destacada %}text-marfil/90{% else %}text-carbon/75{% endif %}">{{ p.descripcion }}</p>{% endif %}
+          <div class="mt-auto pt-6">
+            {% if p.vigencia_texto %}<p class="inline-flex items-center gap-2 text-sm font-semibold {% if p.destacada %}text-oro{% else %}text-oro-oscuro{% endif %}"><svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>{{ p.vigencia_texto }}</p>{% endif %}
+            {% if p.enlace_url %}<div class="mt-4"><a href="{{ p.enlace_url }}" data-evento="promocion" data-evento-origen="{{ p.titulo|slugify }}" class="btn btn-md {% if p.destacada %}btn-oro{% else %}btn-oscuro{% endif %}">{{ p.enlace_texto|default:"Ver más" }}</a></div>{% endif %}
+          </div>
+        </article>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}

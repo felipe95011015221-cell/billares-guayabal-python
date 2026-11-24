@@ -1,14 +1,14 @@
 {% load club_tags %}
-<section class="relative isolate overflow-hidden bg-carbon pb-16 pt-36 text-marfil sm:pb-24 sm:pt-44">
+<section class="relative isolate overflow-hidden bg-carbon pb-14 pt-32 text-marfil sm:pb-20 sm:pt-40">
   {% if foto %}
-  <img src="{{ foto.archivo|img }}" alt="" class="absolute inset-0 -z-20 h-full w-full object-cover opacity-40">
+  <img src="{{ foto.archivo|img }}" alt="" width="{{ foto.ancho }}" height="{{ foto.alto }}" class="absolute inset-0 -z-20 h-full w-full object-cover opacity-40">
   <div class="absolute inset-0 -z-10 bg-gradient-to-t from-carbon via-carbon/80 to-carbon/50"></div>
-  {% if foto.es_referencia %}<span class="pointer-events-none absolute bottom-3 right-4 text-[0.58rem] uppercase tracking-[0.16em] text-marfil/40">Foto de referencia</span>{% endif %}
+  {% if foto.es_referencia %}<span class="pointer-events-none absolute bottom-3 right-4 text-xs text-marfil/70">Foto de referencia</span>{% endif %}
   {% endif %}
   <div class="contenedor revelar">
     <p class="eyebrow mb-6">{{ eyebrow }}</p>
     <h1 class="max-w-4xl font-display text-5xl leading-[0.95] sm:text-7xl lg:text-8xl">{{ titulo|safe }}</h1>
-    {% if texto %}<p class="mt-8 max-w-2xl text-base leading-relaxed text-marfil/70 sm:text-lg">{{ texto }}</p>{% endif %}
-    {% if enlace_url %}<a href="{{ enlace_url }}" class="mt-8 inline-block text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-oro hover:text-oro-claro">{{ enlace_texto }}</a>{% endif %}
+    {% if texto %}<p class="mt-7 max-w-2xl text-base leading-relaxed text-marfil/85 sm:text-lg">{{ texto }}</p>{% endif %}
+    {% if enlace_url %}<a href="{{ enlace_url }}" class="enlace-texto mt-5">{{ enlace_texto }}</a>{% endif %}
   </div>
 </section>

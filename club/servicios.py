@@ -31,7 +31,8 @@ MENSAJE_CONFLICTO = "Otra persona acaba de tomar esta mesa en ese horario. Elige
 def reglas_actuales(aj: Ajustes | None = None) -> disp.Reglas:
     aj = aj or Ajustes.actual()
     return disp.Reglas(
-        duraciones=list(aj.duraciones), intervalo_min=aj.intervalo_min, anticipacion_min=aj.anticipacion_min,
+        duraciones=list(aj.duraciones), intervalo_min=max(5, aj.intervalo_min),  # 0 colgaría el cálculo de franjas
+         anticipacion_min=aj.anticipacion_min,
         dias_max=aj.dias_max, hora_apertura=aj.hora_apertura, hora_cierre=aj.hora_cierre,
     )
 
@@ -56,7 +57,7 @@ def consultar_disponibilidad(modalidad: str, fecha: date, duracion: int, inicio_
     aj = Ajustes.actual()
     reglas = reglas_actuales(aj)
     if duracion not in reglas.duraciones:
-        raise ErrorNegocio("Duración no permitida.")
+        raise ErrorNegocio("Duración no permitida: elige una de las opciones del asistente.")
     desde, hasta = disp.instante(fecha, 0), disp.instante(fecha + timedelta(days=2), 0)
     mesas = list(Mesa.objects.filter(activa=True))
     reservas, bloqueos = _intervalos(desde, hasta)
@@ -83,7 +84,7 @@ def consultar_disponibilidad(modalidad: str, fecha: date, duracion: int, inicio_
 
 
 def crear_reserva(*, modalidad: str, fecha: date, inicio_min: int, duracion: int, mesa_id: int,
-                  nombre: str, celular: str, correo: str) -> Reserva:
+                  nombre: str, celular: str, correo: str, origen: str = "web") -> Reserva:
     aj = Ajustes.actual()
     error = disp.validar_horario(fecha, inicio_min, duracion, reglas_actuales(aj))
     if error:
@@ -102,7 +103,7 @@ def crear_reserva(*, modalidad: str, fecha: date, inicio_min: int, duracion: int
             accion = "confirmada automáticamente" if estado == Reserva.Estado.CONFIRMADA else "solicitud recibida"
             return Reserva.objects.create(
                 mesa=mesa, modalidad=modalidad, inicio=ini, fin=fin, nombre=nombre, celular=celular, correo=correo,
-                estado=estado, valor_estimado=disp.valor_estimado(mesa.tarifa_hora, duracion),
+                estado=estado, origen=origen, valor_estimado=disp.valor_estimado(mesa.tarifa_hora, duracion),
                 historial=[{"fecha": timezone.now().isoformat(), "accion": accion}],
             )
     except IntegrityError as e:  # restricción de exclusión de PostgreSQL

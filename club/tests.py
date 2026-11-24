@@ -200,3 +200,303 @@ class Paginas(Base):
         r.refresh_from_db()
         self.assertEqual(r.estado, Reserva.Estado.CONFIRMADA)
         self.assertEqual(r.historial[-1]["accion"], "confirmada")
+
+
+class RobustezApiTests(TestCase):
+    """El API responde 4xx (nunca 500) ante cuerpos raros y no se deja saltar el límite de envíos."""
+
+    def test_cuerpo_json_que_no_es_objeto_da_422(self):
+        for cuerpo in ["[1, 2]", '"texto"', "123", "null", "{no es json"]:
+            with self.subTest(cuerpo=cuerpo):
+                r = self.client.post("/api/reservas/consultar/", data=cuerpo, content_type="application/json")
+                self.assertEqual(r.status_code, 422)
+
+    def test_limite_de_envios_no_se_evade_con_ip_falsa(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        cuerpo = '{"codigo": "BG-AAAAAA", "celular": "3001234567"}'
+        codigos = [
+            self.client.post("/api/reservas/consultar/", data=cuerpo, content_type="application/json",
+                             HTTP_X_FORWARDED_FOR=f"9.9.9.{i}, 203.0.113.7").status_code
+            for i in range(20)
+        ]
+        self.assertIn(429, codigos)
+
+
+class AjustesYSeguridadTests(TestCase):
+    def test_intervalo_cero_no_cuelga_y_el_panel_lo_rechaza(self):
+        from django.core.exceptions import ValidationError
+        from .servicios import reglas_actuales
+
+        aj = Ajustes.actual()
+        aj.intervalo_min = 0
+        with self.assertRaises(ValidationError):
+            aj.full_clean()
+        self.assertGreaterEqual(reglas_actuales(aj).intervalo_min, 5)
+
+    def test_historial_del_panel_escapa_html(self):
+        from .admin import ReservaAdmin
+        from django.contrib import admin as dj_admin
+
+        mesa = Mesa.objects.create(nombre="M", modalidad="pool")
+        ini = disp.instante(date.today() + timedelta(days=3), 600)
+        r = Reserva.objects.create(mesa=mesa, modalidad="pool", inicio=ini, fin=ini + timedelta(hours=1), nombre="A",
+                                   celular="3000000001", correo="a@ejemplo.test",
+                                   historial=[{"fecha": "2026-11-23T10:00:00", "accion": "editada", "detalle": "<script>alert(1)</script>"}])
+        html = str(ReservaAdmin(Reserva, dj_admin.site).historial_legible(r))
+        self.assertNotIn("<script>", html)
+        self.assertIn("&lt;script&gt;", html)
+
+    def test_json_ld_no_puede_cerrar_el_script(self):
+        from .context_processors import _json_ld
+
+        self.assertNotIn("</", _json_ld())
+
+
+# ====================================================================== Calidad, seguridad y regresiones
+import re
+from html.parser import HTMLParser
+
+from django.contrib.staticfiles import finders
+from django.test import SimpleTestCase, override_settings
+
+from .middleware import PERMISSIONS_POLICY, construir_csp
+
+PAGINAS = ["/", "/club/", "/reservas/", "/reservas/consultar/", "/escuela/", "/torneos/", "/eventos/", "/galeria/",
+           "/contacto/", "/privacidad/", "/creditos/"]
+
+
+class CabecerasSeguridad(Base):
+    def test_cabeceras_en_paginas_y_404(self):
+        for url in ["/", "/contacto/", "/no-existe/", "/robots.txt"]:
+            with self.subTest(url=url):
+                r = self.cliente.get(url)
+                self.assertIn("default-src 'self'", r["Content-Security-Policy"])
+                self.assertEqual(r["Permissions-Policy"], PERMISSIONS_POLICY)
+                self.assertEqual(r["X-Content-Type-Options"], "nosniff")
+                self.assertEqual(r["X-Frame-Options"], "DENY")
+                self.assertEqual(r["Cross-Origin-Opener-Policy"], "same-origin")
+                self.assertEqual(r["Referrer-Policy"], "strict-origin-when-cross-origin")
+
+    def test_cabeceras_en_la_api_y_el_panel(self):
+        self.assertIn("frame-ancestors 'none'", self.cliente.get("/api/disponibilidad/?modalidad=pool")["Content-Security-Policy"])
+        self.assertIn("Content-Security-Policy", self.cliente.get("/admin/login/"))
+
+
+class PoliticaCSP(SimpleTestCase):
+    def test_politica_base_es_estricta(self):
+        csp = construir_csp(ga_id="", google_fonts=False, upgrade=True)
+        for esperado in ["default-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+                         "frame-ancestors 'none'", "upgrade-insecure-requests", "frame-src https://www.google.com"]:
+            self.assertIn(esperado, csp)
+        self.assertNotIn("googletagmanager", csp)
+        self.assertNotIn("fonts.googleapis.com", csp)
+        self.assertNotIn("'unsafe-eval'", csp)
+        self.assertNotIn("*", csp.replace("https://*.", ""))  # sin comodines abiertos
+
+    def test_ga_y_fuentes_solo_si_se_piden(self):
+        csp = construir_csp(ga_id="G-ABC", google_fonts=True, upgrade=False)
+        self.assertIn("https://www.googletagmanager.com", csp)
+        self.assertIn("https://fonts.googleapis.com", csp)
+        self.assertIn("https://fonts.gstatic.com", csp)
+        self.assertNotIn("upgrade-insecure-requests", csp)
+
+    def test_plantillas_no_cargan_origenes_fuera_de_la_politica(self):
+        """Todo origen https externo cargado por las plantillas (src/href de recursos) debe estar permitido en la CSP."""
+        import pathlib
+        permitido = construir_csp(ga_id="G-X", google_fonts=True)
+        patron = re.compile(r"<(?:script|iframe|img|video|source|link)\b[^>]*?(?:src|href)=\"(https://[^/\"]+)")
+        for f in pathlib.Path(__file__).parent.glob("templates/**/*.html"):
+            for m in patron.finditer(f.read_text(encoding="utf-8")):
+                host = m.group(1)
+                if "{{" in host or 'rel="canonical"' in m.group(0):
+                    continue
+                with self.subTest(archivo=f.name, host=host):
+                    self.assertIn(host, permitido)
+
+
+class Limites(Base):
+    def test_limite_por_tipo_de_envio(self):
+        codigos = [self.post("/api/contacto/", {"nombre": "A"}).status_code for _ in range(12)]
+        self.assertIn(429, codigos)
+        self.assertNotIn(500, codigos)
+
+    def test_cuerpo_demasiado_grande_se_rechaza(self):
+        with override_settings(DATA_UPLOAD_MAX_MEMORY_SIZE=1000):
+            r = self.client.post("/api/contacto/", data=json.dumps({"mensaje": "x" * 5000}), content_type="application/json")
+        self.assertIn(r.status_code, (400, 413, 422))
+
+    def test_limite_de_cuerpo_configurado(self):
+        from django.conf import settings
+        self.assertLessEqual(settings.DATA_UPLOAD_MAX_MEMORY_SIZE, 2 * 1024 * 1024)
+
+
+class Honeypot(Base):
+    def test_honeypot_en_todos_los_formularios(self):
+        for url in ["/api/contacto/", "/api/eventos/", "/api/clases/inscripcion/", "/api/torneos/inscripcion/", "/api/reservas/"]:
+            with self.subTest(url=url):
+                r = self.post(url, {"website": "http://spam.test", "nombre": "Bot", "celular": "3001234567"})
+                self.assertNotIn(r.status_code, (200, 201, 500))
+
+
+class Validaciones(Base):
+    def test_no_hay_500_con_datos_basura(self):
+        basura = {"modalidad": "x" * 500, "fecha": "no-fecha", "inicio": "abc", "duracion": -5, "mesa_id": "zzz",
+                  "nombre": "<script>", "celular": None, "correo": "no-correo", "acepta_datos": "quizá"}
+        for url in ["/api/reservas/", "/api/contacto/", "/api/eventos/", "/api/clases/inscripcion/", "/api/torneos/inscripcion/"]:
+            with self.subTest(url=url):
+                self.assertLess(self.post(url, basura).status_code, 500)
+        for q in ["", "?modalidad=pool", "?modalidad=pool&fecha=2020-01-01&duracion=60", "?modalidad=zz&fecha=x&duracion=y"]:
+            with self.subTest(q=q):
+                self.assertLess(self.cliente.get("/api/disponibilidad/" + q).status_code, 500)
+
+    def test_reserva_en_el_pasado_o_lejana_se_rechaza(self):
+        for f in [disp.hoy_bogota() - timedelta(days=1), disp.hoy_bogota() + timedelta(days=400)]:
+            r = self.post("/api/reservas/", self.datos_reserva(fecha=f.isoformat()))
+            self.assertIn(r.status_code, (400, 409, 422))
+        self.assertFalse(Reserva.objects.exists())
+
+    def test_metodo_no_permitido(self):
+        self.assertEqual(self.cliente.get("/api/reservas/").status_code, 405)
+
+
+class Estaticos(Base):
+    def test_fuentes_autoalojadas_existen_y_estan_referenciadas(self):
+        css = finders.find("club/css/fuentes.css")
+        self.assertTrue(css)
+        texto = open(css, encoding="utf-8").read()
+        rutas = re.findall(r"url\(([^)]+)\)", texto)
+        self.assertGreaterEqual(len(rutas), 2)
+        import os
+        for ruta in rutas:
+            self.assertTrue(os.path.exists(os.path.normpath(os.path.join(os.path.dirname(css), ruta))), ruta)
+        self.assertIn("font-display: swap", texto)
+
+    def test_robots_y_sitemap(self):
+        robots = self.cliente.get("/robots.txt").content.decode()
+        self.assertIn("Disallow: /admin/", robots)
+        self.assertIn("Sitemap:", robots)
+        sm = self.cliente.get("/sitemap.xml")
+        self.assertEqual(sm.status_code, 200)
+        self.assertIn("xml", sm["Content-Type"])
+        urls = re.findall(r"<loc>https?://[^/]+(/[^<]*)</loc>", sm.content.decode())
+        self.assertIn("/", urls)
+        self.assertFalse([u for u in urls if u.startswith(("/admin", "/api"))])
+        for u in urls:
+            with self.subTest(url=u):
+                self.assertEqual(self.cliente.get(u).status_code, 200)
+
+    def test_imagenes_de_las_plantillas_existen(self):
+        for url in PAGINAS:
+            html = self.cliente.get(url).content.decode()
+            for ruta in re.findall(r"(?:src|href|poster)=\"/static/([^\"?#]+)", html):
+                with self.subTest(pagina=url, recurso=ruta):
+                    self.assertTrue(finders.find(ruta), ruta)
+
+
+class _Enlaces(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.hrefs, self.ids = [], set()
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "a" and a.get("href"):
+            self.hrefs.append(a["href"])
+        if a.get("id"):
+            self.ids.add(a["id"])
+
+
+class EnlacesInternos(Base):
+    def test_todo_enlace_interno_resuelve(self):
+        vistos, rotos = set(), []
+        for pagina in PAGINAS + ["/torneos/"]:
+            p = _Enlaces()
+            p.feed(self.cliente.get(pagina).content.decode())
+            for href in p.hrefs:
+                if not href.startswith("/") or href.startswith("//"):
+                    continue
+                destino = href.split("#")[0].split("?")[0]
+                if not destino or destino in vistos or destino.startswith("/static/"):
+                    continue
+                vistos.add(destino)
+                estado = self.cliente.get(destino).status_code
+                if estado not in (200, 301, 302):
+                    rotos.append((pagina, href, estado))
+        self.assertEqual(rotos, [])
+        self.assertGreater(len(vistos), 8)
+
+    def test_anclas_internas_existen(self):
+        for pagina in PAGINAS:
+            p = _Enlaces()
+            p.feed(self.cliente.get(pagina).content.decode())
+            for href in p.hrefs:
+                if href.startswith("#") and len(href) > 1:
+                    with self.subTest(pagina=pagina, ancla=href):
+                        self.assertIn(href[1:], p.ids)
+
+    def test_enlaces_externos_seguros(self):
+        """Los enlaces que abren pestaña nueva llevan rel=noopener."""
+        for pagina in PAGINAS:
+            html = self.cliente.get(pagina).content.decode()
+            for etiqueta in re.findall(r"<a\b[^>]*href=\"https?://[^>]*target=\"_blank\"[^>]*>|<a\b[^>]*target=\"_blank\"[^>]*href=\"https?://[^>]*>", html):
+                with self.subTest(pagina=pagina, etiqueta=etiqueta[:80]):
+                    self.assertIn("noopener", etiqueta)
+
+
+class ReservasLogicaConcurrente(Base):
+    def test_dos_clientes_misma_franja_solo_uno_gana(self):
+        otro = Client()
+        a = self.post("/api/reservas/", self.datos_reserva())
+        b = otro.post("/api/reservas/", json.dumps(self.datos_reserva(nombre="Otro", celular="3109998877")), content_type="application/json")
+        self.assertEqual(sorted([a.status_code, b.status_code]), [201, 409])
+        self.assertEqual(Reserva.objects.filter(mesa=self.pool).count(), 1)
+
+    def test_franjas_solapadas_parciales_en_cadena(self):
+        horas = [(1200, 120), (1230, 60), (1290, 60), (1140, 90), (1320, 60)]
+        ok = []
+        for i, (ini, dur) in enumerate(horas):
+            try:
+                crear_reserva(modalidad="pool", fecha=self.fecha, inicio_min=ini, duracion=dur, mesa_id=self.pool.id,
+                              nombre=f"N{i}", celular=f"300000000{i}", correo=f"n{i}@ejemplo.test")
+                ok.append((ini, dur))
+            except ErrorNegocio:
+                pass
+        # No puede haber dos reservas activas que se solapen en la misma mesa.
+        activas = list(Reserva.objects.filter(mesa=self.pool).exclude(estado=Reserva.Estado.CANCELADA).order_by("inicio"))
+        for x, y in zip(activas, activas[1:]):
+            self.assertLessEqual(x.fin, y.inicio)
+
+    def test_consulta_de_reserva_ajena_no_filtra_datos(self):
+        r = self.post("/api/reservas/", self.datos_reserva())
+        codigo = r.json()["data"]["codigo"]
+        malo = self.post("/api/reservas/consultar/", {"codigo": codigo, "celular": "3110000000"})
+        self.assertNotIn("Ana", malo.content.decode())
+        self.assertNotIn("ana@ejemplo.test", malo.content.decode())
+
+
+class ProduccionConfig(SimpleTestCase):
+    def test_settings_de_produccion_no_aceptan_debug_ni_clave_vacia(self):
+        import subprocess, sys, os
+        env = {k: v for k, v in os.environ.items() if not k.startswith("DJANGO_")}
+        env.update(DJANGO_DEBUG="0", DJANGO_SECRET_KEY="")
+        r = subprocess.run([sys.executable, "-c", "import os;os.environ['DJANGO_SETTINGS_MODULE']='config.settings';"
+                            "import django.conf;django.conf.settings.SECRET_KEY"], env=env, capture_output=True, text=True,
+                           cwd=str(__import__("pathlib").Path(__file__).resolve().parent.parent))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("DJANGO_SECRET_KEY", r.stderr)
+
+
+class Compresion(Base):
+    def test_html_se_comprime_y_binarios_no(self):
+        r = self.cliente.get("/", HTTP_ACCEPT_ENCODING="gzip")
+        self.assertEqual(r.get("Content-Encoding"), "gzip")
+        self.assertIn("Accept-Encoding", r["Vary"])
+        sm = self.cliente.get("/sitemap.xml", HTTP_ACCEPT_ENCODING="gzip")
+        self.assertEqual(sm.get("Content-Encoding"), "gzip")
+        from django.http import HttpResponse
+        from .middleware import CompresionTextoMiddleware
+        peticion = type("R", (), {"META": {"HTTP_ACCEPT_ENCODING": "gzip"}})()
+        img = HttpResponse(b"x" * 5000, content_type="image/webp")
+        self.assertIsNone(CompresionTextoMiddleware(lambda r: img).process_response(peticion, img).get("Content-Encoding"))

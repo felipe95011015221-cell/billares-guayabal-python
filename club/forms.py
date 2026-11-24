@@ -46,18 +46,26 @@ class FormBase(forms.Form):
         return ""
 
 
+MSG_MODALIDAD = {"required": "Elige carambola o pool.", "invalid_choice": "Elige carambola o pool."}
+MSG_FECHA = {"required": "Elige una fecha.", "invalid": "La fecha no es válida."}
+MSG_DURACION = {"required": "Elige una duración.", "invalid": "La duración no es válida.",
+                "min_value": "La duración no es válida.", "max_value": "La duración no es válida."}
+MSG_INICIO = {"required": "Elige una hora de inicio.", "invalid": "La hora de inicio no es válida.",
+              "min_value": "La hora de inicio no es válida.", "max_value": "La hora de inicio no es válida."}
+
+
 class ConsultaDisponibilidadForm(forms.Form):
-    modalidad = forms.ChoiceField(choices=Modalidad.choices)
-    fecha = forms.DateField(input_formats=["%Y-%m-%d"])
-    duracion = forms.IntegerField(min_value=15, max_value=600)
-    inicio = forms.IntegerField(min_value=0, max_value=48 * 60, required=False)
+    modalidad = forms.ChoiceField(choices=Modalidad.choices, error_messages=MSG_MODALIDAD)
+    fecha = forms.DateField(input_formats=["%Y-%m-%d"], error_messages=MSG_FECHA)
+    duracion = forms.IntegerField(min_value=15, max_value=600, error_messages=MSG_DURACION)
+    inicio = forms.IntegerField(min_value=0, max_value=48 * 60, required=False, error_messages=MSG_INICIO)
 
 
 class ReservaForm(FormBase):
-    modalidad = forms.ChoiceField(choices=Modalidad.choices)
-    fecha = forms.DateField(input_formats=["%Y-%m-%d"])
-    inicio = forms.IntegerField(min_value=0, max_value=48 * 60)
-    duracion = forms.IntegerField(min_value=15, max_value=600)
+    modalidad = forms.ChoiceField(choices=Modalidad.choices, error_messages=MSG_MODALIDAD)
+    fecha = forms.DateField(input_formats=["%Y-%m-%d"], error_messages=MSG_FECHA)
+    inicio = forms.IntegerField(min_value=0, max_value=48 * 60, error_messages=MSG_INICIO)
+    duracion = forms.IntegerField(min_value=15, max_value=600, error_messages=MSG_DURACION)
     mesa_id = forms.IntegerField(error_messages={"required": "Selecciona una mesa."})
 
 

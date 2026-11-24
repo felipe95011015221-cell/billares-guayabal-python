@@ -1,8 +1,12 @@
+import os
+import re
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import path
+from django.urls import path, re_path
+from django.views.static import serve
 
 from club import api, views
 from club.sitemaps import SITEMAPS
@@ -39,5 +43,9 @@ urlpatterns = [
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+elif os.environ.get("SERVE_MEDIA", "").lower() in {"1", "true", "yes"}:
+    # Producción sin almacenamiento externo: sirve /media/ desde MEDIA_ROOT (útil con un disco persistente).
+    # django.views.static.serve evita salirse de la carpeta (.. y rutas absolutas). Ver docs/MEDIA.md.
+    urlpatterns += [re_path(rf"^{re.escape(settings.MEDIA_URL.strip('/'))}/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT})]
 
 handler404 = "club.views.error_404"

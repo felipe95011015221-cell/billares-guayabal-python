@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from club import negocio
 from club.disponibilidad import hoy_bogota, instante
-from club.models import Ajustes, Bloqueo, Clase, FotoGaleria, InscripcionTorneo, Mesa, Partido, Reserva, SesionClase, Torneo
+from club.models import Ajustes, Bloqueo, Clase, FotoGaleria, InscripcionTorneo, Mesa, Partido, Promocion, Reserva, SesionClase, Torneo
 
 MESAS_EJEMPLO = [("Mesa 1", "carambola"), ("Mesa 2", "carambola"), ("Mesa 3", "carambola"), ("Mesa 4", "carambola"),
                  ("Mesa 5", "pool"), ("Mesa 6", "pool")]
@@ -51,6 +51,12 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Datos iniciales listos."))
 
     def _demo(self):
+        if not Promocion.objects.exists():
+            Promocion.objects.create(
+                titulo="Ejemplo de demostración: promoción de prueba", ejemplo=True, orden=1, destacada=True,
+                descripcion="Texto ficticio para ver cómo se muestra una promoción. Edítala o desactívala en el panel; no es una oferta real.",
+                enlace_url="/reservas/", enlace_texto="Reservar mesa",
+            )
         if Reserva.objects.exists():
             self.stdout.write("· Datos demo ya existían; no se duplican.")
             return

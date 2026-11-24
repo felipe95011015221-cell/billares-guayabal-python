@@ -1,7 +1,9 @@
 """Modelos de datos del Club de Billares Guayabal."""
 import secrets
+from datetime import date
 
-from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -12,6 +14,22 @@ ALFABETO_CODIGO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"  # sin 0/O ni 1/I/L
 
 def generar_codigo(prefijo: str, largo: int = 6) -> str:
     return f"{prefijo}-" + "".join(secrets.choice(ALFABETO_CODIGO) for _ in range(largo))
+
+
+MAX_IMAGEN_BYTES = 5 * 1024 * 1024  # 5 MB por foto
+
+
+def validar_tamano_imagen(archivo):
+    """Rechaza fotos demasiado pesadas (el disco y el ancho de banda del hosting son limitados)."""
+    if archivo and getattr(archivo, "size", 0) > MAX_IMAGEN_BYTES:
+        raise ValidationError(f"La imagen pesa {archivo.size / 1048576:.1f} MB; el máximo es {MAX_IMAGEN_BYTES // 1048576} MB.")
+
+
+MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def _fecha_es(d: date, con_anio: bool = False) -> str:
+    return f"{d.day} de {MESES_ES[d.month - 1]}" + (f" de {d.year}" if con_anio else "")
 
 
 class Modalidad(models.TextChoices):
@@ -50,6 +68,20 @@ class Ajustes(models.Model):
 
     def __str__(self):
         return "Configuración del club"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        errores = {}
+        if self.intervalo_min < 5:
+            errores["intervalo_min"] = "Debe ser de al menos 5 minutos."
+        if self.hora_cierre <= self.hora_apertura:
+            errores["hora_cierre"] = "El cierre debe ser posterior a la apertura."
+        if not (isinstance(self.duraciones, list) and self.duraciones
+                and all(isinstance(d, int) and not isinstance(d, bool) and 15 <= d <= 600 for d in self.duraciones)):
+            errores["duraciones"] = "Escribe una lista de minutos entre 15 y 600, por ejemplo [60, 90, 120]."
+        if errores:
+            raise ValidationError(errores)
 
     def save(self, *args, **kwargs):
         self.pk = 1
@@ -111,6 +143,13 @@ class Reserva(models.Model):
         CANCELADA = "cancelada", "Cancelada"
         RECHAZADA = "rechazada", "No aprobada"
 
+    class Origen(models.TextChoices):
+        WEB = "web", "Sitio web"
+        PANEL = "panel", "Panel (manual)"
+        WHATSAPP = "whatsapp", "WhatsApp"
+        TELEFONO = "telefono", "Llamada"
+        PRESENCIAL = "presencial", "En el club"
+
     ACTIVOS = (Estado.PENDIENTE, Estado.CONFIRMADA, Estado.EN_CURSO)
 
     codigo = models.CharField(max_length=12, unique=True, editable=False)
@@ -124,6 +163,10 @@ class Reserva(models.Model):
     estado = models.CharField(max_length=12, choices=Estado.choices, default=Estado.PENDIENTE)
     valor_estimado = models.PositiveIntegerField(null=True, blank=True)
     observaciones = models.TextField(blank=True)
+    origen = models.CharField(
+        "origen", max_length=10, choices=Origen.choices, default="web", blank=True,
+        help_text="Por dónde llegó la reserva (para medir qué canal funciona).",
+    )
     historial = models.JSONField(default=list, blank=True, editable=False)
     creada_en = models.DateTimeField(auto_now_add=True)
 
@@ -404,7 +447,10 @@ class FotoGaleria(models.Model):
         AMBIENTE = "ambiente", "Ambiente"
         DETALLE = "detalle", "Detalle"
 
-    imagen = models.ImageField(upload_to="galeria/", blank=True, help_text="Sube una foto real del club (JPG, PNG o WebP)")
+    imagen = models.ImageField(
+        upload_to="galeria/", blank=True, help_text="Sube una foto real del club (JPG, PNG o WebP, máximo 5 MB)",
+        validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp"]), validar_tamano_imagen],
+    )
     ruta_estatica = models.CharField(max_length=200, blank=True, editable=False, help_text="Fotos incluidas con el sitio")
     alt = models.CharField("descripción (texto alternativo)", max_length=160)
     categoria = models.CharField(max_length=10, choices=Categoria.choices, default=Categoria.AMBIENTE)
@@ -426,3 +472,61 @@ class FotoGaleria(models.Model):
         from django.templatetags.static import static
 
         return self.imagen.url if self.imagen else static(f"club/img/{self.ruta_estatica}")
+
+
+# ---------------------------------------------------------------- Promociones
+class PromocionQuerySet(models.QuerySet):
+    def vigentes(self, hoy: date | None = None):
+        """Activas y dentro de su vigencia (sin fechas = siempre vigente)."""
+        if hoy is None:
+            from .disponibilidad import hoy_bogota
+
+            hoy = hoy_bogota()
+        return self.filter(activa=True).filter(
+            models.Q(vigencia_desde__isnull=True) | models.Q(vigencia_desde__lte=hoy),
+            models.Q(vigencia_hasta__isnull=True) | models.Q(vigencia_hasta__gte=hoy),
+        )
+
+
+class Promocion(models.Model):
+    titulo = models.CharField(max_length=80)
+    descripcion = models.TextField("descripción", blank=True)
+    vigencia_desde = models.DateField("vigente desde", null=True, blank=True)
+    vigencia_hasta = models.DateField("vigente hasta (inclusive)", null=True, blank=True)
+    destacada = models.BooleanField(default=False)
+    activa = models.BooleanField("visible en la web", default=True)
+    orden = models.PositiveSmallIntegerField(default=0)
+    enlace_url = models.CharField("enlace del botón", max_length=200, blank=True, help_text="Ruta interna (/reservas/) o enlace completo (https://...)")
+    enlace_texto = models.CharField("texto del botón", max_length=40, blank=True)
+    ejemplo = models.BooleanField("es un ejemplo de demostración", default=False, editable=False)
+
+    objects = PromocionQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["orden", "-destacada", "id"]
+        verbose_name = "promoción"
+        verbose_name_plural = "promociones"
+
+    def __str__(self):
+        return self.titulo
+
+    def clean(self):
+        if self.vigencia_desde and self.vigencia_hasta and self.vigencia_hasta < self.vigencia_desde:
+            raise ValidationError({"vigencia_hasta": "La fecha final no puede ser anterior a la inicial."})
+        if self.enlace_url and not self.enlace_url.startswith(("/", "https://", "http://")):
+            raise ValidationError({"enlace_url": "Usa una ruta que empiece por / o un enlace completo (https://...)."})
+
+    @property
+    def vigencia_texto(self) -> str:
+        d, h = self.vigencia_desde, self.vigencia_hasta
+        if d and h:
+            if d == h:
+                return f"Solo el {_fecha_es(d, True)}"
+            if d.year == h.year:
+                return f"Del {_fecha_es(d)} al {_fecha_es(h, True)}"
+            return f"Del {_fecha_es(d, True)} al {_fecha_es(h, True)}"
+        if h:
+            return f"Hasta el {_fecha_es(h, True)}"
+        if d:
+            return f"Desde el {_fecha_es(d, True)}"
+        return ""

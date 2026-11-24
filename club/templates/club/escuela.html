@@ -1,9 +1,17 @@
 {% extends "club/base.html" %}{% load club_tags %}
 {% block contenido %}
-{% include "club/parciales/encabezado_pagina.html" with eyebrow="Escuela de billar" titulo='La precisión <em class="text-oro">se entrena.</em>' texto="Programas por niveles para aprender desde cero o llevar tu juego al siguiente nivel, en carambola a tres bandas y pool." foto=negocio.FOTOS.mano_taco %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Escuela de billar" titulo='Clases de billar en Medellín' texto="Programas por niveles para aprender desde cero o llevar tu juego al siguiente nivel, en carambola a tres bandas y pool." foto=negocio.FOTOS.mano_taco %}
 <section class="seccion tono-claro claro !pt-16">
   <div class="contenedor">
     {% if hay_propuestas %}<div class="aviso mb-14 max-w-3xl text-carbon/80"><p>Estos programas son una <strong>propuesta inicial</strong> y están pendientes de confirmación por el club. Instructores, precios y horarios definitivos se publicarán al aprobarse. Puedes pre-inscribirte para que te contactemos.</p></div>{% endif %}
+    {% if clases|length > 1 %}
+    <nav aria-label="Programas de la escuela" class="mb-14">
+      <p class="mb-3 text-sm font-semibold text-carbon/75">Ir a un programa</p>
+      <ul class="flex flex-wrap gap-2">
+        {% for c in clases %}<li><a href="#{{ c.slug }}" class="inline-flex min-h-11 items-center rounded-full border border-carbon/25 px-5 text-sm font-semibold text-carbon transition-[background-color,color,border-color] duration-200 hover:border-carbon hover:bg-carbon hover:text-marfil">{{ c.titulo }}</a></li>{% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
     {% if calendario %}
     <div class="revelar mb-20">
       <h2 class="font-display text-4xl">Calendario de clases</h2>
@@ -11,8 +19,8 @@
         {% for s, c in calendario %}
         <li><a href="#{{ c.slug }}" class="grid grid-cols-[5.5rem_1fr_auto] items-center gap-4 py-4 hover:bg-carbon/[0.03] sm:grid-cols-[9rem_1fr_auto]">
           <span class="text-sm font-semibold">{{ s.inicio|fecha_corta }}</span>
-          <span><span class="block font-display text-xl leading-tight">{{ c.titulo }}</span><span class="text-xs text-carbon/55">{{ s.inicio|hora }}</span></span>
-          <span class="text-xs uppercase tracking-[0.12em] text-carbon/60">{% if s.disponibles > 0 %}{{ s.disponibles }} cupos{% else %}Lleno{% endif %}</span>
+          <span><span class="block font-display text-xl leading-tight">{{ c.titulo }}</span><span class="text-sm text-carbon/75">{{ s.inicio|hora }}</span></span>
+          <span class="text-sm text-carbon/75">{% if s.disponibles > 0 %}{{ s.disponibles }} cupos{% else %}Lleno{% endif %}</span>
         </a></li>
         {% endfor %}
       </ul>
@@ -20,18 +28,18 @@
     {% endif %}
     <div class="space-y-8">
       {% for c in clases %}
-      <article id="{{ c.slug }}" class="revelar grid scroll-mt-28 gap-10 rounded-3xl border border-carbon/10 bg-[#fbf8f1] p-7 sm:p-10 lg:grid-cols-12">
+      <article id="{{ c.slug }}" class="revelar grid scroll-mt-28 gap-10 rounded-3xl border border-carbon/10 bg-[#fafbf8] p-7 sm:p-10 lg:grid-cols-12">
         <div class="lg:col-span-5">
           <div class="flex flex-wrap gap-2"><span class="insignia insignia-verde">{{ c.nivel }}</span><span class="insignia insignia-verde">{{ c.get_modalidad_display }}</span>{% if not c.confirmada %}<span class="insignia insignia-alerta !text-oro-oscuro">Propuesta · por confirmar</span>{% endif %}</div>
-          <p class="mt-8 font-display text-6xl leading-none text-oro-oscuro/40">{{ forloop.counter|dos_digitos }}</p>
-          <h2 class="mt-3 font-display text-4xl sm:text-5xl">{{ c.titulo }}</h2>
+          
+          <h2 class="mt-6 font-display text-4xl sm:text-5xl">{{ c.titulo }}</h2>
           <p class="mt-4 leading-relaxed text-carbon/70">{{ c.descripcion }}</p>
           <dl class="mt-8 grid grid-cols-2 gap-5 text-sm">
-            <div><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-carbon/50">Duración</dt><dd class="mt-1">{{ c.duracion_texto }}</dd></div>
-            <div><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-carbon/50">Nivel</dt><dd class="mt-1">{{ c.nivel }}</dd></div>
-            <div><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-carbon/50">Instructor</dt><dd class="mt-1">{% if c.instructor and c.instructor.activo %}{{ c.instructor.nombre }}{% else %}Por definir{% endif %}</dd></div>
-            <div><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-carbon/50">Precio</dt><dd class="mt-1">{{ c.precio|cop }}</dd></div>
-            <div><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-carbon/50">Cupos</dt><dd class="mt-1">{% if c.proximas %}{{ c.cupos_libres }} disponibles{% else %}Por definir{% endif %}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Duración</dt><dd class="mt-1">{{ c.duracion_texto }}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Nivel</dt><dd class="mt-1">{{ c.nivel }}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Instructor</dt><dd class="mt-1">{% if c.instructor and c.instructor.activo %}{{ c.instructor.nombre }}{% else %}Por definir{% endif %}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Precio</dt><dd class="mt-1">{{ c.precio|cop }}</dd></div>
+            <div><dt class="text-sm font-semibold text-carbon/75">Cupos</dt><dd class="mt-1">{% if c.proximas %}{{ c.cupos_libres }} disponibles{% else %}Por definir{% endif %}</dd></div>
           </dl>
         </div>
         <div class="lg:col-span-6 lg:col-start-7">
@@ -45,7 +53,7 @@
                 <label class="flex cursor-pointer flex-col rounded-xl border border-carbon/15 p-3 text-sm transition has-[:checked]:border-verde has-[:checked]:bg-verde has-[:checked]:text-marfil {% if s.disponibles <= 0 %}cursor-not-allowed opacity-40{% endif %}">
                   <input type="radio" name="sesion_id" value="{{ s.id }}" class="sr-only" {% if s.disponibles <= 0 %}disabled{% endif %}>
                   <span class="font-semibold">{{ s.inicio|fecha_corta }}</span><span class="opacity-75">{{ s.inicio|hora }}</span>
-                  <span class="mt-1 text-[0.65rem] uppercase tracking-[0.12em] opacity-70">{% if s.disponibles <= 0 %}Sin cupos{% else %}{{ s.disponibles }} cupo{{ s.disponibles|pluralize }}{% endif %}</span>
+                  <span class="mt-1 text-sm opacity-70">{% if s.disponibles <= 0 %}Sin cupos{% else %}{{ s.disponibles }} cupo{{ s.disponibles|pluralize }}{% endif %}</span>
                 </label>
                 {% endfor %}
               </div>
@@ -57,7 +65,7 @@
               <div><label class="etiqueta-campo" for="e-{{ c.slug }}">Correo</label><input id="e-{{ c.slug }}" name="correo" type="email" class="campo"><p data-error="correo" class="error-campo oculto"></p></div>
               <div><label class="etiqueta-campo" for="l-{{ c.slug }}">Tu nivel</label><select id="l-{{ c.slug }}" name="nivel_declarado" class="campo"><option value="">Selecciona…</option><option>Nunca he jugado</option><option>Juego ocasionalmente</option><option>Juego con frecuencia</option><option>Compito</option></select></div>
             </div>
-            <label class="flex cursor-pointer gap-3 text-sm leading-relaxed opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#c5a36a]"><span>Autorizo el tratamiento de mis datos para gestionar esta inscripción (Ley 1581 de 2012).</span></label>
+            <label class="flex cursor-pointer gap-3 text-sm leading-relaxed opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#f2c230]"><span>Autorizo el tratamiento de mis datos para gestionar esta inscripción (Ley 1581 de 2012).</span></label>
             <p data-error="acepta_datos" class="error-campo oculto"></p>
             <p data-error-general class="oculto rounded-xl border border-error/40 bg-error/10 p-3 text-sm"></p>
             <button type="submit" class="btn btn-md btn-verde">{% if c.confirmada %}Inscribirme{% else %}Pre-inscribirme{% endif %}</button>
@@ -67,7 +75,7 @@
             <p class="mt-2 text-sm text-carbon/70">Tu código es <strong class="font-mono" data-codigo></strong>. Tu cupo queda <strong>pendiente de confirmación</strong>: el club te contactará para confirmar el horario{% if c.confirmada %} y el pago.{% else %}, el instructor y el valor del programa.{% endif %}</p>
           </div>
           {% else %}
-          <p class="rounded-xl border border-dashed border-carbon/20 p-5 text-sm text-carbon/60">Aún no hay horarios publicados para este programa. Escríbenos por WhatsApp para dejar tu interés.</p>
+          <div class="rounded-xl border border-dashed border-carbon/30 p-5"><p class="text-sm text-carbon/80">Aún no hay horarios publicados para este programa. Escríbenos por WhatsApp para dejar tu interés.</p><a href="{{ wa_contexto }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="escuela_{{ c.slug }}" class="btn btn-md btn-whatsapp mt-4">{% include "club/parciales/icono_whatsapp.html" with clase="h-4 w-4" %}Escribir por WhatsApp</a></div>
           {% endif %}
         </div>
       </article>

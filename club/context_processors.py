@@ -6,26 +6,59 @@ from . import negocio
 
 
 def _json_ld():
-    """Datos estructurados LocalBusiness: SOLO datos con estado «confirmado»."""
-    data = {
-        "@context": "https://schema.org",
+    """Datos estructurados (@graph: WebSite + SportsActivityLocation) con SOLO datos «confirmado».
+
+    No incluye calificaciones ni reseñas. `sameAs` solo aparece cuando hay redes confirmadas.
+    """
+    base = settings.SITE_URL
+    lugar = {
         "@type": "SportsActivityLocation",
+        "@id": f"{base}/#club",
         "name": negocio.NOMBRE.valor,
-        "url": settings.SITE_URL,
+        "url": f"{base}/",
+        "inLanguage": "es-CO",
         "areaServed": {"@type": "City", "name": "Medellín"},
         "sport": "Billiards",
-        "logo": f"{settings.SITE_URL}/static/club/img/logo.png",
+        "logo": f"{base}/static/club/img/logo.png",
+        "image": f"{base}/static/club/img/club/salon-vista-alta-noche.webp",
+        "potentialAction": {
+            "@type": "ReserveAction",
+            "name": "Reservar mesa de billar",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": f"{base}/reservas/",
+                "inLanguage": "es-CO",
+                "actionPlatform": [
+                    "http://schema.org/DesktopWebPlatform",
+                    "http://schema.org/MobileWebPlatform",
+                ],
+            },
+        },
     }
     if negocio.DIRECCION.confirmado:
-        data["address"] = {"@type": "PostalAddress", "streetAddress": negocio.DIRECCION.valor, "addressLocality": negocio.CIUDAD.valor,
-                           "addressRegion": negocio.REGION, "addressCountry": negocio.PAIS}
+        lugar["address"] = {"@type": "PostalAddress", "streetAddress": negocio.DIRECCION.valor, "addressLocality": negocio.CIUDAD.valor,
+                            "addressRegion": negocio.REGION, "addressCountry": negocio.PAIS}
     elif negocio.CIUDAD.confirmado:
-        data["address"] = {"@type": "PostalAddress", "addressLocality": negocio.CIUDAD.valor, "addressRegion": negocio.REGION, "addressCountry": negocio.PAIS}
+        lugar["address"] = {"@type": "PostalAddress", "addressLocality": negocio.CIUDAD.valor, "addressRegion": negocio.REGION, "addressCountry": negocio.PAIS}
     if negocio.TELEFONO.confirmado:
-        data["telephone"] = negocio.TELEFONO.valor
+        lugar["telephone"] = negocio.TELEFONO.valor
+    if negocio.CORREO.confirmado:
+        lugar["email"] = negocio.CORREO.valor
     if negocio.HORARIO.confirmado:
-        data["openingHoursSpecification"] = [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], "opens": "09:00", "closes": "02:00"}]
-    return json.dumps(data, ensure_ascii=False)
+        lugar["openingHoursSpecification"] = [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], "opens": "09:00", "closes": "02:00"}]
+    redes = [d.valor for d in (negocio.INSTAGRAM, negocio.FACEBOOK) if d.confirmado and d.valor]
+    if redes:
+        lugar["sameAs"] = redes
+    sitio_web = {
+        "@type": "WebSite",
+        "@id": f"{base}/#sitio",
+        "url": f"{base}/",
+        "name": negocio.NOMBRE.valor,
+        "inLanguage": "es-CO",
+        "publisher": {"@id": f"{base}/#club"},
+    }
+    data = {"@context": "https://schema.org", "@graph": [sitio_web, lugar]}
+    return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")  # no puede cerrar el <script>
 
 
 def sitio(request):
@@ -40,6 +73,9 @@ def sitio(request):
         "wa_general": negocio.enlace_whatsapp("general"),
         "wa_contexto": negocio.enlace_whatsapp(contexto_wa),
         "wa_reservas": negocio.enlace_whatsapp("reservas"),
+        "wa_reservas_carambola": negocio.enlace_whatsapp("reservas_carambola"),
+        "wa_reservas_pool": negocio.enlace_whatsapp("reservas_pool"),
+        "wa_clases": negocio.enlace_whatsapp("clases"),
         "wa_torneos": negocio.enlace_whatsapp("torneos"),
         "wa_eventos": negocio.enlace_whatsapp("eventos"),
         "wa_ubicacion": negocio.enlace_whatsapp("ubicacion"),
