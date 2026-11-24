@@ -287,3 +287,50 @@ class MigracionDatosConfirmadosTests(TestCase):
         self.assertIn("escríbenos por WhatsApp", html)
         self.assertNotIn("propuesta inicial", html)
         self.assertNotIn("por confirmar", html.lower().split("<footer")[0].replace("horario por confirmar", ""))
+
+
+class InventarioDeMesasTests(TestCase):
+    """Inventario confirmado: 5 mesas de carambola y 2 de pool, a COP 15.000 la hora."""
+
+    def _migrar(self):
+        import importlib
+
+        from django.apps import apps
+
+        importlib.import_module("club.migrations.0004_tarifa_y_promocion_confirmadas").cargar(apps, None)
+
+    def test_comando_crea_7_mesas_con_tarifa(self):
+        from django.core.management import call_command
+
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        call_command("cargar_datos_iniciales", verbosity=0)
+        self.assertEqual(Mesa.objects.filter(modalidad="carambola").count(), 5)
+        self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
+        self.assertEqual(set(Mesa.objects.values_list("tarifa_hora", flat=True)), {15000})
+
+    def test_migracion_completa_lo_que_falta_sin_borrar_ni_renombrar(self):
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        for i, mod in enumerate(["carambola"] * 4 + ["pool"] * 2, 1):  # el inventario de ejemplo anterior
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, orden=i)
+        antes = set(Mesa.objects.values_list("pk", "nombre", "modalidad"))
+        self._migrar(); self._migrar()  # idempotente
+        self.assertEqual(Mesa.objects.filter(modalidad="carambola").count(), 5)
+        self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
+        self.assertTrue(antes <= set(Mesa.objects.values_list("pk", "nombre", "modalidad")))  # nada borrado ni renombrado
+        self.assertEqual(Mesa.objects.exclude(tarifa_hora=15000).count(), 0)
+        self.assertEqual(len(set(Mesa.objects.values_list("nombre", flat=True))), 7)  # sin nombres repetidos
+
+    def test_migracion_no_crea_mesas_si_no_hay_ninguna(self):
+        from .models import Mesa
+
+        Mesa.objects.all().delete()
+        self._migrar()
+        self.assertEqual(Mesa.objects.count(), 0)  # las crea cargar_datos_iniciales
+
+    def test_aviso_de_reservas_ya_no_dice_inventario_pendiente(self):
+        html = self.client.get("/reservas/").content.decode()
+        self.assertNotIn("pendientes de confirmación", html)

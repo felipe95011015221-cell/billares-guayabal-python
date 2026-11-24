@@ -4,7 +4,7 @@
 {% include "club/parciales/encabezado_pagina.html" with eyebrow="Reservas" titulo='Reserva tu mesa de billar en Medellín' texto="Elige modalidad, fecha y hora. Verificamos la disponibilidad real de cada mesa antes de registrar tu solicitud." foto=negocio.FOTOS.tiro_mesa_verde enlace_url=url_consultar enlace_texto="¿Ya reservaste? Consulta tu reserva" %}
 <section class="seccion tono-oscuro !pt-6">
   <div class="contenedor">
-    <div class="aviso mb-8 max-w-3xl"><p>El inventario de mesas y las tarifas mostradas son configurables y están <strong>pendientes de confirmación</strong> por el club.{% if ajustes.modo_reserva == "manual" %} Las reservas en línea son solicitudes: quedan aprobadas solo cuando el club las confirma.{% endif %}</p></div>
+    {% if ajustes.modo_reserva == "manual" %}<div class="aviso mb-8 max-w-3xl"><p>Las reservas en línea son solicitudes: quedan aprobadas solo cuando el club las confirma.</p></div>{% endif %}
 
     <div id="asistente" class="scroll-mt-28">
       <ol id="pasos" class="mb-10 grid grid-cols-4 gap-2" aria-label="Pasos de la reserva">
