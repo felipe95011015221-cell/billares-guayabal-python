@@ -2,18 +2,26 @@
 {% block contenido %}
 {# Página de reservas cuando las reservas en línea están apagadas: se reserva por WhatsApp. #}
 {% include "club/parciales/encabezado_pagina.html" with eyebrow="Reservas" titulo='Reserva tu mesa de billar en Medellín' texto="Reservamos por WhatsApp: escríbenos con la modalidad, la fecha y la hora, y te confirmamos la mesa." foto=negocio.FOTOS.tiro_mesa_verde %}
-<section class="seccion tono-claro claro !pt-16">
+<section class="seccion tono-claro claro !pt-16" aria-labelledby="mesas-titulo">
   <div class="contenedor">
-    <ul class="grid gap-6 md:grid-cols-2">
-      {% for m in modalidades %}
-      <li class="flex flex-col rounded-2xl border border-carbon/10 bg-[#fafbf8] p-7 sm:p-9">
-        <h2 class="font-display text-3xl sm:text-4xl">{{ m.nombre }}</h2>
-        {% if m.cantidad %}<p class="mt-3 text-carbon/75">{{ m.cantidad }} mesa{{ m.cantidad|pluralize }}: {% for mesa in m.mesas %}{{ mesa.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
-        <p class="mt-6 font-display text-4xl">{{ m.tarifa|cop:"Tarifa por confirmar" }}{% if m.tarifa %} <span class="font-sans text-base font-medium text-carbon/75">la hora</span>{% endif %}</p>
-        <a href="{{ m.wa_url }}" target="_blank" rel="noopener noreferrer" data-evento="cta_reservar" data-evento-origen="reservas_{{ m.clave }}" class="btn btn-lg btn-whatsapp mt-8 self-start">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Reservar por WhatsApp</a>
-      </li>
-      {% endfor %}
-    </ul>
+    <h2 id="mesas-titulo" class="sr-only">Mesas del club</h2>
+    {% for m in modalidades %}
+    <div class="{% if not forloop.first %}mt-16 {% endif %}">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+        <h3 class="font-display text-3xl sm:text-4xl">{{ m.nombre }}</h3>
+        <p class="font-display text-2xl text-carbon/85">{{ m.cantidad }} mesa{{ m.cantidad|pluralize }}{% if m.tarifa %} · {{ m.tarifa|cop }} <span class="text-lg font-semibold text-carbon/75">la hora</span>{% else %} · Tarifa por confirmar{% endif %}</p>
+      </div>
+      <ul class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {% for mesa in m.mesas %}
+        <li class="flex flex-col rounded-2xl border border-carbon/10 bg-[#fafbf8] p-5">
+          {% include "club/parciales/mesa_grafica.html" with modalidad=m.clave %}
+          <p class="mt-5 font-display text-2xl">{{ mesa.nombre }}</p>
+          <a href="{{ mesa.wa_url }}" target="_blank" rel="noopener noreferrer" data-evento="cta_reservar" data-evento-origen="mesa_{{ mesa.id }}" aria-label="Reservar {{ mesa.nombre }} por WhatsApp" class="btn btn-md btn-whatsapp mt-4 w-full">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Reservar</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
   </div>
 </section>
 {% include "club/parciales/promociones.html" with compacta=True %}
