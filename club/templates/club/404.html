@@ -1,0 +1,9 @@
+{% extends "club/base.html" %}
+{% block contenido %}
+<section class="flex min-h-[80vh] flex-col items-center justify-center bg-carbon px-6 pt-24 text-center text-marfil">
+  <p class="eyebrow mb-6">Error 404</p>
+  <h1 class="font-display text-6xl sm:text-8xl">Bola fuera de la mesa.</h1>
+  <p class="mt-6 max-w-md text-marfil/65">La página que buscas no existe o cambió de lugar.</p>
+  <a href="{% url 'inicio' %}" class="btn btn-lg btn-oro mt-10">Volver al inicio</a>
+</section>
+{% endblock %}

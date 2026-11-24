@@ -1,0 +1,21 @@
+{% extends "club/base.html" %}{% load club_tags %}
+{% block contenido %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Torneos y campeonatos" titulo='Mide tu juego <em class="text-oro">en la mesa.</em>' texto="Competencias de carambola a tres bandas y pool organizadas por el club. Consulta formato, requisitos y cupos." foto=negocio.FOTOS.triangulo_tacos %}
+<section class="seccion tono-oscuro !pt-10">
+  <div class="contenedor">
+    <div class="revelar"><p class="eyebrow mb-6">Próximos eventos</p><h2 class="titulo-seccion">Calendario competitivo</h2></div>
+    <div class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {% for t in activos %}<div class="revelar">{% include "club/parciales/tarjeta_torneo.html" %}</div>
+      {% empty %}
+      <div class="rounded-2xl border border-dashed border-current/20 px-6 py-14 text-center md:col-span-2 lg:col-span-3">
+        <p class="font-display text-2xl">Aún no hay torneos publicados</p>
+        <p class="mx-auto mt-3 max-w-md text-sm opacity-70">El club anunciará aquí sus próximos campeonatos con fecha, formato, valor de inscripción y cupos.</p>
+        <a href="{{ wa_torneos }}" target="_blank" rel="noopener noreferrer" class="btn btn-md btn-oro mt-6">Quiero que me avisen</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% if pasados %}<div class="mt-24"><h2 class="font-display text-4xl">Resultados anteriores</h2><div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{% for t in pasados %}{% include "club/parciales/tarjeta_torneo.html" %}{% endfor %}</div></div>{% endif %}
+  </div>
+</section>
+{% include "club/parciales/cta_final.html" with titulo="Domina la mesa. Vive el juego." %}
+{% endblock %}

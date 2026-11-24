@@ -1,0 +1,16 @@
+{% extends "club/base.html" %}
+{% block contenido %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Legal" titulo="Tratamiento de datos personales" %}
+<section class="seccion tono-claro claro !py-16">
+  <div class="contenedor max-w-3xl">
+    <div class="aviso mb-10 text-carbon/80"><p>Borrador base. Debe ser revisado y aprobado por el responsable del tratamiento (razón social, NIT y canal de atención por confirmar) antes de publicarse en producción.</p></div>
+    <div class="space-y-6 leading-relaxed text-carbon/80 [&_h2]:mt-10 [&_h2]:font-display [&_h2]:text-3xl [&_h2]:text-carbon">
+      <p>En cumplimiento de la Ley 1581 de 2012 y el Decreto 1377 de 2013, {{ negocio.NOMBRE.valor }} informa cómo recolecta y usa los datos personales que recibe a través de este sitio web.</p>
+      <h2>Datos que recolectamos</h2><p>Nombre, número de celular, correo electrónico y, cuando aplica, documento de identidad, nivel de juego o información del evento solicitado.</p>
+      <h2>Finalidades</h2><p>Gestionar reservas de mesas, inscripciones a clases y torneos, solicitudes de eventos y mensajes de contacto; comunicarnos contigo sobre esas gestiones.</p>
+      <h2>Derechos del titular</h2><p>Puedes conocer, actualizar, rectificar y solicitar la supresión de tus datos, así como revocar la autorización, escribiendo a los canales de contacto del club.</p>
+      <h2>Seguridad</h2><p>Los datos se almacenan en una base de datos con acceso restringido al personal autorizado del club y no se comparten con terceros para fines comerciales.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

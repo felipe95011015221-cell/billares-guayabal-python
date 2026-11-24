@@ -1,0 +1,51 @@
+{% extends "club/base.html" %}{% load club_tags %}
+{% block contenido %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Eventos y experiencias" titulo='Reúne a tu gente <em class="text-oro">alrededor de la mesa.</em>' texto="Diseñamos contigo una experiencia de billar para tu grupo. Cuéntanos qué tienes en mente." foto=negocio.FOTOS.salon_mesas %}
+<section class="seccion tono-oscuro !pt-8">
+  <div class="contenedor">
+    <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <li class="revelar rounded-2xl border border-marfil/10 p-6"><h2 class="font-display text-2xl leading-tight">Eventos privados</h2><p class="mt-2 text-sm text-marfil/60">Mesas para tu grupo en un horario reservado.</p></li>
+      <li class="revelar rounded-2xl border border-marfil/10 p-6"><h2 class="font-display text-2xl leading-tight">Encuentros empresariales</h2><p class="mt-2 text-sm text-marfil/60">Integraciones de equipo con un plan distinto a la oficina.</p></li>
+      <li class="revelar rounded-2xl border border-marfil/10 p-6"><h2 class="font-display text-2xl leading-tight">Celebraciones</h2><p class="mt-2 text-sm text-marfil/60">Cumpleaños, despedidas y reencuentros alrededor de la mesa.</p></li>
+      <li class="revelar rounded-2xl border border-marfil/10 p-6"><h2 class="font-display text-2xl leading-tight">Jornadas recreativas</h2><p class="mt-2 text-sm text-marfil/60">Una tarde de juego con clase introductoria para principiantes.</p></li>
+      <li class="revelar rounded-2xl border border-marfil/10 p-6"><h2 class="font-display text-2xl leading-tight">Actividades grupales</h2><p class="mt-2 text-sm text-marfil/60">Mini torneos internos y retos entre amigos o colegas.</p></li>
+    </ul>
+  </div>
+</section>
+{% include "club/parciales/seccion_video.html" with con_boton=False %}
+<section class="seccion tono-claro claro">
+  <div class="contenedor grid gap-14 lg:grid-cols-12">
+    <div class="revelar lg:col-span-4">
+      <p class="eyebrow mb-6">Solicitud</p>
+      <h2 class="titulo-seccion">Cuéntanos <em class="text-verde">tu plan.</em></h2>
+      <p class="texto-seccion">Respondemos con disponibilidad y propuesta. Ninguna solicitud se considera confirmada hasta que el club la apruebe.</p>
+      <div class="aviso mt-8 text-carbon/80"><p>Capacidad, paquetes y valores de eventos están pendientes de definición por el club.</p></div>
+    </div>
+    <div class="revelar lg:col-span-7 lg:col-start-6">
+      <form data-api="{% url 'api_evento' %}" data-exito="exito-evento" novalidate class="relative space-y-6">
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] h-0 w-0">
+        <div class="grid gap-5 sm:grid-cols-3">
+          <div class="sm:col-span-3"><label class="etiqueta-campo" for="ev-tipo">Tipo de evento</label><select id="ev-tipo" name="tipo" class="campo">{% for v, n in tipos %}<option value="{{ v }}">{{ n }}</option>{% endfor %}</select></div>
+          <div class="sm:col-span-2"><label class="etiqueta-campo" for="ev-fecha">Fecha deseada</label><input id="ev-fecha" name="fecha" type="date" min="{{ manana }}" class="campo"><p data-error="fecha" class="error-campo oculto"></p></div>
+          <div><label class="etiqueta-campo" for="ev-n">Participantes</label><input id="ev-n" name="participantes" type="number" min="2" max="300" value="10" inputmode="numeric" class="campo"><p data-error="participantes" class="error-campo oculto"></p></div>
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div><label class="etiqueta-campo" for="ev-nombre">Nombre</label><input id="ev-nombre" name="nombre" autocomplete="name" class="campo"><p data-error="nombre" class="error-campo oculto"></p></div>
+          <div><label class="etiqueta-campo" for="ev-emp">Empresa (opcional)</label><input id="ev-emp" name="empresa" autocomplete="organization" class="campo"></div>
+          <div><label class="etiqueta-campo" for="ev-cel">Celular</label><input id="ev-cel" name="celular" type="tel" inputmode="numeric" class="campo"><p data-error="celular" class="error-campo oculto"></p></div>
+          <div><label class="etiqueta-campo" for="ev-correo">Correo</label><input id="ev-correo" name="correo" type="email" class="campo"><p data-error="correo" class="error-campo oculto"></p></div>
+        </div>
+        <div><label class="etiqueta-campo" for="ev-msg">Cuéntanos tu idea (opcional)</label><textarea id="ev-msg" name="mensaje" class="campo min-h-32" placeholder="Horario aproximado, si quieren torneo interno, clase grupal…"></textarea></div>
+        <label class="flex cursor-pointer gap-3 text-sm opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#c5a36a]"><span>Autorizo el tratamiento de mis datos para responder esta solicitud (Ley 1581 de 2012).</span></label><p data-error="acepta_datos" class="error-campo oculto"></p>
+        <p data-error-general class="oculto rounded-xl border border-error/40 bg-error/10 p-3 text-sm"></p>
+        <button type="submit" class="btn btn-lg btn-verde w-full sm:w-auto">Enviar solicitud</button>
+      </form>
+      <div id="exito-evento" role="status" class="oculto rounded-3xl border border-verde/30 bg-[#fbf8f1] p-8 text-center">
+        <h3 class="font-display text-4xl">Solicitud recibida</h3>
+        <p class="mx-auto mt-3 max-w-md text-carbon/70">Código <strong class="font-mono" data-codigo></strong>. Tu solicitud está sujeta a disponibilidad y aprobación del club; te contactaremos para revisar los detalles.</p>
+        <a href="{{ wa_eventos }}" target="_blank" rel="noopener noreferrer" class="mt-6 inline-block text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-verde">Agilizar por WhatsApp →</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

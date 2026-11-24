@@ -1,0 +1,60 @@
+{% extends "club/base.html" %}
+{% block contenido %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Mi reserva" titulo='Consulta tu <em class="text-oro">reserva.</em>' texto="Por tu privacidad, pedimos el código y el celular con el que hiciste la solicitud." %}
+<section class="seccion tono-oscuro !pt-4">
+  <div class="contenedor grid gap-10 lg:grid-cols-2">
+    <form id="form-consulta" novalidate class="space-y-6">
+      <div><label class="etiqueta-campo" for="codigo">Código de reserva</label><input id="codigo" name="codigo" placeholder="BG-XXXXXX" autocapitalize="characters" class="campo font-mono uppercase tracking-[0.14em]"><p data-error="codigo" class="error-campo oculto"></p></div>
+      <div><label class="etiqueta-campo" for="celular">Celular con el que reservaste</label><input id="celular" name="celular" type="tel" inputmode="numeric" class="campo"><p data-error="celular" class="error-campo oculto"></p></div>
+      <button type="submit" class="btn btn-lg btn-oro w-full sm:w-auto">Consultar</button>
+      <p id="consulta-error" role="alert" class="oculto rounded-xl border border-error/40 bg-error/10 p-4 text-sm"></p>
+    </form>
+    <div aria-live="polite">
+      <div id="consulta-vacio" class="flex h-full min-h-60 items-center justify-center rounded-3xl border border-dashed border-marfil/15 p-8 text-center text-sm text-marfil/50">Ingresa tu código y celular para ver el estado de tu reserva.</div>
+      <div id="consulta-resultado" class="oculto rounded-3xl border border-oro/30 bg-carbon-2 p-8">
+        <div class="flex flex-wrap items-center justify-between gap-3"><p id="cr-codigo" class="font-mono text-2xl tracking-[0.14em] text-oro"></p><span id="cr-estado" class="insignia"></span></div>
+        <p id="cr-hola" class="mt-6 font-display text-3xl"></p>
+        <dl class="mt-6 space-y-3 text-sm">
+          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Fecha</dt><dd id="cr-fecha" class="text-right first-letter:uppercase"></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Horario</dt><dd id="cr-horario"></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Mesa</dt><dd id="cr-mesa"></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Valor estimado</dt><dd id="cr-valor"></dd></div>
+        </dl>
+        <a id="cr-whatsapp" href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" class="mt-8 inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-oro">Cambiar o cancelar por WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const TONOS = { pendiente: "insignia-alerta", confirmada: "insignia-ok", en_curso: "insignia-oro", finalizada: "insignia-neutro", cancelada: "insignia-error", rechazada: "insignia-error" };
+  const fF = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota", weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const fH = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit", hour12: true });
+  const form = document.getElementById("form-consulta");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    form.querySelectorAll("[data-error]").forEach((el) => el.classList.add("oculto"));
+    const err = document.getElementById("consulta-error"); err.classList.add("oculto");
+    const r = await window.enviarJson("{% url 'api_consultar' %}", { codigo: form.codigo.value, celular: form.celular.value });
+    if (!r.ok) {
+      err.textContent = r.error; err.classList.remove("oculto");
+      Object.entries(r.campos || {}).forEach(([k, v]) => { const el = form.querySelector(`[data-error="${k}"]`); if (el) { el.textContent = v; el.classList.remove("oculto"); } });
+      return;
+    }
+    const d = r.data, ini = new Date(d.inicio), fin = new Date(d.fin);
+    document.getElementById("consulta-vacio").classList.add("oculto");
+    document.getElementById("consulta-resultado").classList.remove("oculto");
+    document.getElementById("cr-codigo").textContent = d.codigo;
+    const est = document.getElementById("cr-estado"); est.textContent = d.estado_texto; est.className = "insignia " + (TONOS[d.estado] || "");
+    document.getElementById("cr-hola").textContent = "Hola, " + d.nombre;
+    document.getElementById("cr-fecha").textContent = fF.format(ini);
+    document.getElementById("cr-horario").textContent = fH.format(ini) + " – " + fH.format(fin);
+    document.getElementById("cr-mesa").textContent = d.mesa + " · " + (d.modalidad === "pool" ? "Pool" : "Carambola");
+    document.getElementById("cr-valor").textContent = d.valor_estimado == null ? "Por confirmar" : "$ " + Number(d.valor_estimado).toLocaleString("es-CO");
+    document.getElementById("cr-whatsapp").href = "{{ wa_reservas }}" + encodeURIComponent("\n\nMi código de reserva es " + d.codigo + ".");
+  });
+});
+</script>
+{% endblock %}

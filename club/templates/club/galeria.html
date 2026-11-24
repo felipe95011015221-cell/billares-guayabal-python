@@ -1,0 +1,33 @@
+{% extends "club/base.html" %}
+{% block contenido %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Galería" titulo='Nuestro club, <em class="text-oro">en detalle.</em>' texto="Fotos reales de nuestras mesas de carambola y del ambiente del Club de Billares Guayabal." %}
+<section class="seccion tono-oscuro !pt-4">
+  <div class="contenedor">
+    {% if categorias|length > 1 %}
+    <div role="tablist" aria-label="Filtrar por modalidad" class="-mx-5 mb-10 flex gap-2 overflow-x-auto px-5 pb-2 sm:mx-0 sm:flex-wrap sm:px-0">
+      <button role="tab" aria-selected="true" data-filtro="todas" class="shrink-0 rounded-full border border-oro bg-oro px-5 py-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-carbon">Todas <span class="opacity-60">({{ fotos|length }})</span></button>
+      {% for c, n, cuenta in categorias %}<button role="tab" aria-selected="false" data-filtro="{{ c }}" class="shrink-0 rounded-full border border-marfil/15 px-5 py-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-marfil/70">{{ n }} <span class="opacity-60">({{ cuenta }})</span></button>{% endfor %}
+    </div>
+    {% endif %}
+    {% if fotos %}
+    <ul id="galeria" class="columns-1 gap-4 sm:columns-2 lg:columns-3 [&>li]:mb-4">
+      {% for f in fotos %}
+      <li data-categoria="{{ f.categoria }}" class="break-inside-avoid">
+        <button type="button" class="group relative block w-full overflow-hidden rounded-sm" aria-label="Ampliar: {{ f.alt }}">
+          <img src="{{ f.url }}" alt="{{ f.alt }}" width="{{ f.ancho }}" height="{{ f.alto }}" loading="lazy" class="h-auto w-full transition-transform duration-[1.2s] group-hover:scale-[1.04]">
+        </button>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="rounded-2xl border border-dashed border-marfil/15 p-12 text-center text-marfil/55">Pronto publicaremos fotos del club.</p>
+    {% endif %}
+  </div>
+</section>
+<div id="visor" role="dialog" aria-modal="true" aria-label="Foto ampliada" class="oculto fixed inset-0 z-[60] flex items-center justify-center bg-carbon/95 p-4 text-marfil backdrop-blur">
+  <button type="button" data-cerrar aria-label="Cerrar" class="absolute right-4 top-4 flex h-12 w-12 items-center justify-center rounded-full border border-marfil/20 text-xl">✕</button>
+  <button type="button" data-mover="-1" aria-label="Anterior" class="absolute left-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-marfil/20 text-xl">‹</button>
+  <button type="button" data-mover="1" aria-label="Siguiente" class="absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-marfil/20 text-xl">›</button>
+  <figure class="max-h-full max-w-6xl"><img src="" alt="" class="mx-auto max-h-[80vh] w-auto rounded-sm object-contain"><figcaption class="mt-4 text-center text-sm text-marfil/70"></figcaption></figure>
+</div>
+{% endblock %}

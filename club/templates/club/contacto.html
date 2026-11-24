@@ -1,0 +1,38 @@
+{% extends "club/base.html" %}
+{% block contenido %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Contacto" titulo='Hablemos de <em class="text-oro">billar.</em>' texto="Escríbenos por WhatsApp según lo que necesites, o déjanos un mensaje." %}
+<section class="seccion tono-oscuro !pt-2">
+  <div class="contenedor">
+    <ul class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {% for ctx, t in asuntos %}
+      <li><a href="{% if ctx == 'reservas' %}{{ wa_reservas }}{% elif ctx == 'torneos' %}{{ wa_torneos }}{% elif ctx == 'eventos' %}{{ wa_eventos }}{% else %}{{ wa_general }}{% endif %}" target="_blank" rel="noopener noreferrer" class="flex h-full flex-col justify-between gap-6 rounded-2xl border border-marfil/10 p-6 transition hover:border-oro/50">
+        {% include "club/parciales/icono_whatsapp.html" with clase="h-6 w-6 text-oro" %}
+        <span><span class="block font-display text-2xl">{{ t }}</span><span class="mt-1 block text-[0.65rem] uppercase tracking-[0.16em] text-marfil/55">Escribir</span></span>
+      </a></li>
+      {% endfor %}
+    </ul>
+    <div class="mt-20 grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4"><p class="eyebrow mb-6">Formulario</p><h2 class="titulo-seccion">Déjanos un mensaje</h2></div>
+      <div class="lg:col-span-7 lg:col-start-6">
+        <form data-api="{% url 'api_contacto' %}" data-exito="exito-contacto" novalidate class="relative space-y-5">
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] h-0 w-0">
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div><label class="etiqueta-campo" for="co-nombre">Nombre</label><input id="co-nombre" name="nombre" autocomplete="name" class="campo"><p data-error="nombre" class="error-campo oculto"></p></div>
+            <div><label class="etiqueta-campo" for="co-asunto">Asunto</label><select id="co-asunto" name="asunto" class="campo"><option value="reservas">Reservas</option><option value="clases">Clases</option><option value="torneos">Torneos</option><option value="eventos">Eventos</option><option value="otro">Otro</option></select></div>
+            <div><label class="etiqueta-campo" for="co-correo">Correo</label><input id="co-correo" name="correo" type="email" autocomplete="email" class="campo"><p data-error="correo" class="error-campo oculto"></p></div>
+            <div><label class="etiqueta-campo" for="co-cel">Celular (opcional)</label><input id="co-cel" name="celular" type="tel" inputmode="numeric" class="campo"></div>
+          </div>
+          <div><label class="etiqueta-campo" for="co-msg">Mensaje</label><textarea id="co-msg" name="mensaje" class="campo min-h-32"></textarea><p data-error="mensaje" class="error-campo oculto"></p></div>
+          <label class="flex cursor-pointer gap-3 text-sm opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#c5a36a]"><span>Autorizo el tratamiento de mis datos para responder este mensaje (Ley 1581 de 2012).</span></label><p data-error="acepta_datos" class="error-campo oculto"></p>
+          <p data-error-general class="oculto rounded-xl border border-error/40 bg-error/10 p-3 text-sm"></p>
+          <button type="submit" class="btn btn-lg btn-oro">Enviar mensaje</button>
+        </form>
+        <div id="exito-contacto" role="status" class="oculto rounded-2xl border border-oro/30 bg-oro/10 p-8"><p class="font-display text-3xl text-oro">✓ Mensaje enviado</p><p class="mt-2 text-marfil/70">Gracias por escribirnos. Te responderemos lo antes posible.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="seccion tono-claro claro">
+  <div class="contenedor"><div class="mb-12"><p class="eyebrow mb-6">Ubicación</p><h2 class="titulo-seccion">Club de Billares Guayabal</h2></div>{% include "club/parciales/ubicacion.html" %}</div>
+</section>
+{% endblock %}

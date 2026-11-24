@@ -1,0 +1,144 @@
+{% load static club_tags %}<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111714">
+  {% if seo_titulo_absoluto %}<title>{{ seo_titulo_absoluto }}</title>{% else %}<title>{% if seo_titulo %}{{ seo_titulo }} · {% endif %}{{ negocio.NOMBRE_CORTO }}</title>{% endif %}
+  <meta name="description" content="{{ seo_descripcion|default:'Club de billar en Guayabal, Medellín. Carambola a tres bandas y pool. Reserva tu mesa en línea, escuela de billar, torneos y eventos.' }}">
+  <meta name="keywords" content="billares en Medellín, Club de Billares Guayabal, Billares Guayabal, club de billar Medellín, billar tres bandas Medellín, jugar pool en Medellín, reservar mesa de billar Medellín, clases de billar Medellín">
+  {% if seo_noindex %}<meta name="robots" content="noindex">{% endif %}
+  <link rel="canonical" href="{{ site_url }}{{ request.path }}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_CO">
+  <meta property="og:site_name" content="{{ negocio.NOMBRE_CORTO }}">
+  <meta property="og:title" content="{% if seo_titulo_absoluto %}{{ seo_titulo_absoluto }}{% elif seo_titulo %}{{ seo_titulo }}{% else %}{{ negocio.NOMBRE_CORTO }}{% endif %}">
+  <meta property="og:description" content="{{ seo_descripcion }}">
+  <meta property="og:url" content="{{ site_url }}{{ request.path }}">
+  <meta property="og:image" content="{{ site_url }}{% static 'club/img/club/salon-panoramico.webp' %}">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="{% static 'club/img/icon.png' %}" type="image/png" sizes="512x512">
+  <link rel="apple-touch-icon" href="{% static 'club/img/apple-icon.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'club/css/sitio.css' %}">
+  <script type="application/ld+json">{{ json_ld|safe }}</script>
+  {% if ga_id %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_id }}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ ga_id }}',{anonymize_ip:true});</script>
+  {% endif %}
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-dvh overflow-x-hidden">
+  <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded focus:bg-oro focus:px-4 focus:py-2 focus:text-carbon">Saltar al contenido</a>
+
+  {# ---------- Encabezado ---------- #}
+  <header id="encabezado" class="fixed inset-x-0 top-0 z-50 border-b border-transparent bg-gradient-to-b from-carbon/70 to-transparent transition-[background-color,border-color] duration-500">
+    <div id="encabezado-barra" class="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 transition-[height] duration-500 sm:px-8 lg:h-24 lg:px-12">
+      <a href="{% url 'inicio' %}" class="flex items-center gap-3 text-marfil" aria-label="Club de Billares Guayabal, inicio">
+        <img id="encabezado-logo" src="{% static 'club/img/logo.webp' %}" alt="Club de Billares Guayabal" width="900" height="758" class="h-14 w-auto drop-shadow-[0_4px_12px_rgb(0_0_0/0.5)] transition-[height] duration-500 lg:h-16">
+        <span class="whitespace-nowrap leading-none">
+          <span class="block text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-oro">Club de Billares</span>
+          <span class="mt-0.5 block font-display text-2xl tracking-wide">Guayabal</span>
+        </span>
+      </a>
+      <nav aria-label="Principal" class="hidden xl:block">
+        <ul class="flex items-center gap-7">
+          {% for nombre_url, etiqueta in nav %}{% url nombre_url as destino %}
+          <li><a href="{{ destino }}" {% if request.path|activo:destino %}aria-current="page"{% endif %}
+                 class="relative whitespace-nowrap py-2 text-[0.78rem] font-medium uppercase tracking-[0.16em] transition-colors {% if request.path|activo:destino %}text-oro{% else %}text-marfil/75 hover:text-marfil{% endif %}">{{ etiqueta }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+      <div class="flex items-center gap-2">
+        <a href="{% url 'reservas' %}" class="group relative hidden h-10 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-oro px-5 text-[0.7rem] font-semibold uppercase tracking-[0.08em] text-carbon transition-all duration-300 hover:-translate-y-0.5 hover:bg-oro-claro sm:inline-flex">Reservar mesa</a>
+        <button type="button" id="boton-menu" class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-marfil/20 text-marfil xl:hidden" aria-expanded="false" aria-controls="menu-movil" aria-label="Abrir menú">
+          <svg data-icono="menu" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <svg data-icono="cerrar" class="oculto h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  {# Menú móvil FUERA del header: el desenfoque del header no debe contener al panel fijo #}
+  <div id="menu-movil" class="fixed inset-0 z-[45] overflow-y-auto overscroll-contain bg-carbon xl:hidden" aria-hidden="true">
+    <nav aria-label="Menú móvil" class="flex min-h-full flex-col px-6 pb-10 pt-24">
+      <ul class="divide-y divide-marfil/10 border-y border-marfil/10">
+        {% for nombre_url, etiqueta in nav %}{% url nombre_url as destino %}
+        <li class="item" style="transition-delay: {{ forloop.counter0|add:3 }}0ms">
+          <a href="{{ destino }}" class="flex items-center justify-between py-4 font-display text-3xl {% if request.path|activo:destino %}text-oro{% else %}text-marfil{% endif %}">
+            {{ etiqueta }}<span class="font-sans text-xs tracking-[0.2em] text-marfil/40">0{{ forloop.counter }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="mt-8 grid gap-3">
+        <a href="{% url 'reservas' %}" class="inline-flex h-14 w-full items-center justify-center rounded-full bg-oro text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-carbon">Reservar una mesa</a>
+        <div class="grid grid-cols-3 gap-3 text-xs uppercase tracking-[0.14em] text-marfil/80">
+          <a href="{{ wa_general }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2 rounded-xl border border-marfil/15 py-4">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5 text-oro" %} WhatsApp</a>
+          <a href="{{ enlace_llamar }}" class="flex flex-col items-center gap-2 rounded-xl border border-marfil/15 py-4"><svg class="h-5 w-5 text-oro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg> Llamar</a>
+          <a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2 rounded-xl border border-marfil/15 py-4"><svg class="h-5 w-5 text-oro" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Llegar</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <main id="contenido">{% block contenido %}{% endblock %}</main>
+
+  {# ---------- Pie de página ---------- #}
+  <footer class="relative border-t border-marfil/10 bg-carbon pb-28 pt-20 text-marfil lg:pb-12">
+    <div class="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+      <div class="grid gap-14 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <a href="{% url 'inicio' %}" class="inline-block" aria-label="Club de Billares Guayabal, inicio"><img src="{% static 'club/img/logo.webp' %}" alt="Club de Billares Guayabal" width="900" height="758" loading="lazy" class="h-36 w-auto sm:h-44"></a>
+          <p class="mt-6 max-w-sm text-sm leading-relaxed text-marfil/60">Carambola a tres bandas y pool en Guayabal, Medellín. Un lugar para jugar, competir, aprender y compartir.</p>
+        </div>
+        <nav aria-label="Pie de página" class="lg:col-span-3">
+          <p class="eyebrow mb-5">Explora</p>
+          <ul class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-marfil/70">
+            {% for nombre_url, etiqueta in nav %}<li><a href="{% url nombre_url %}" class="transition-colors hover:text-oro">{{ etiqueta }}</a></li>{% endfor %}
+            <li><a href="{% url 'consultar' %}" class="transition-colors hover:text-oro">Mi reserva</a></li>
+          </ul>
+        </nav>
+        <address class="not-italic lg:col-span-4">
+          <p class="eyebrow mb-5">Visítanos</p>
+          <ul class="space-y-4 text-sm text-marfil/75">
+            <li><a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" class="hover:text-oro">{{ negocio.DIRECCION.valor }}</a>{% if negocio.DIRECCION.por_confirmar %} <span class="text-[0.65rem] uppercase tracking-[0.14em] text-oro/70">(por confirmar)</span>{% endif %}</li>
+            <li><a href="{{ enlace_llamar }}" class="hover:text-oro">{{ negocio.TELEFONO.valor }}</a> · <a href="{{ wa_general }}" target="_blank" rel="noopener noreferrer" class="hover:text-oro">WhatsApp</a>{% if negocio.TELEFONO.por_confirmar %} <span class="text-[0.65rem] uppercase tracking-[0.14em] text-oro/70">(por confirmar)</span>{% endif %}</li>
+            <li>{{ negocio.HORARIO.valor }}{% if negocio.HORARIO.por_confirmar %} <span class="text-[0.65rem] uppercase tracking-[0.14em] text-oro/70">(por confirmar)</span>{% endif %}</li>
+          </ul>
+        </address>
+      </div>
+      <div class="linea-oro my-12"></div>
+      <div class="flex flex-col gap-4 text-xs text-marfil/45 sm:flex-row sm:items-center sm:justify-between">
+        <p>© {% now "Y" %} {{ negocio.NOMBRE_CORTO }}. Medellín, Colombia.</p>
+        <div class="flex flex-wrap gap-x-6 gap-y-2">
+          <a href="{% url 'privacidad' %}" class="hover:text-oro">Tratamiento de datos</a>
+          <a href="{% url 'creditos' %}" class="hover:text-oro">Créditos fotográficos</a>
+          <a href="{% url 'admin:index' %}" class="hover:text-oro" rel="nofollow">Acceso administración</a>
+        </div>
+      </div>
+      <p class="mt-6 max-w-3xl text-[0.7rem] leading-relaxed text-marfil/35">Algunas fotografías del sitio son imágenes de referencia de bancos gratuitos (Unsplash y Pexels); se identifican como «Foto de referencia».</p>
+    </div>
+  </footer>
+
+  {# ---------- Botón flotante de WhatsApp y barra inferior móvil ---------- #}
+  <a href="{{ wa_contexto }}" target="_blank" rel="noopener noreferrer" aria-label="Escríbenos por WhatsApp" class="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#1f8f55] text-white shadow-[0_12px_30px_-8px_rgb(0_0_0/0.6)] transition-transform duration-300 hover:scale-105 lg:bottom-8 lg:right-8">
+    {% include "club/parciales/icono_whatsapp.html" with clase="h-7 w-7" %}
+  </a>
+  <div class="fixed inset-x-0 bottom-0 z-40 border-t border-marfil/10 bg-carbon/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl lg:hidden">
+    <div class="flex gap-3">
+      <a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" aria-label="Cómo llegar" class="flex h-12 w-14 shrink-0 items-center justify-center rounded-full border border-marfil/20 text-oro"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></a>
+      {% if en_reservas %}
+      <a href="{% url 'consultar' %}" class="flex h-12 flex-1 items-center justify-center rounded-full border border-oro/50 text-[0.74rem] font-semibold uppercase tracking-[0.12em] text-oro">Consultar mi reserva</a>
+      {% else %}
+      <a href="{% url 'reservas' %}" class="flex h-12 flex-1 items-center justify-center rounded-full bg-oro text-[0.74rem] font-semibold uppercase tracking-[0.12em] text-carbon">Reservar una mesa</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <script src="{% static 'club/js/sitio.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
