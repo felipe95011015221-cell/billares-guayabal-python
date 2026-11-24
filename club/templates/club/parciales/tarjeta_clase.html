@@ -1,0 +1,16 @@
+{% load club_tags %}
+<a href="{% url 'escuela' %}#{{ clase.slug }}" class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-carbon/10 bg-[#fbf8f1] p-7 transition-all duration-500 hover:-translate-y-1 hover:border-verde/40 hover:shadow-[0_30px_60px_-30px_rgb(17_23_20/0.35)]">
+  <div>
+    <span class="font-display text-5xl leading-none text-oro-oscuro/50">{{ indice|dos_digitos }}</span>
+    <h3 class="mt-8 font-display text-3xl leading-tight text-carbon">{{ clase.titulo }}</h3>
+    <p class="mt-3 text-sm leading-relaxed text-carbon/65">{{ clase.descripcion }}</p>
+  </div>
+  <div class="mt-8 space-y-4">
+    <div class="flex flex-wrap gap-2"><span class="insignia insignia-verde">{{ clase.nivel }}</span><span class="insignia insignia-verde">{{ clase.get_modalidad_display }}</span></div>
+    <div class="flex items-center justify-between border-t border-carbon/10 pt-4 text-xs text-carbon/60">
+      <span>{{ clase.duracion_texto }}</span>
+      <span>{% if clase.proximas %}Próxima: {{ clase.proximas.0.inicio|fecha_corta }}{% else %}Horarios por publicar{% endif %}</span>
+    </div>
+    {% if not clase.confirmada %}<p class="text-[0.68rem] uppercase tracking-[0.14em] text-oro-oscuro">Programa propuesto · por confirmar</p>{% endif %}
+  </div>
+</a>
