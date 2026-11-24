@@ -1,5 +1,6 @@
 """Panel de administración del club (Django admin, en español)."""
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.db import IntegrityError, transaction
 from django.utils.html import format_html
@@ -348,6 +349,13 @@ class FotoGaleriaAdmin(admin.ModelAdmin):
     list_display = ["miniatura", "alt", "categoria", "orden", "visible"]
     list_editable = ["categoria", "orden", "visible"]
     list_filter = ["categoria", "visible"]
+
+    def has_add_permission(self, request):
+        # En Vercel el disco es de solo lectura: las fotos nuevas se agregan al código (club/static).
+        return not settings.EN_VERCEL
+
+    def get_readonly_fields(self, request, obj=None):
+        return ["imagen"] if settings.EN_VERCEL else []
 
     @admin.display(description="Foto")
     def miniatura(self, obj):
