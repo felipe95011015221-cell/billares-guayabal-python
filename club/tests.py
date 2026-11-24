@@ -500,3 +500,31 @@ class Compresion(Base):
         peticion = type("R", (), {"META": {"HTTP_ACCEPT_ENCODING": "gzip"}})()
         img = HttpResponse(b"x" * 5000, content_type="image/webp")
         self.assertIsNone(CompresionTextoMiddleware(lambda r: img).process_response(peticion, img).get("Content-Encoding"))
+
+
+class DatosConfirmadosTests(TestCase):
+    """Los datos confirmados del club aparecen en el JSON-LD y en las páginas; no hay pendientes."""
+
+    def test_json_ld_incluye_contacto_y_redes_confirmadas(self):
+        import json
+        import re
+
+        html = self.client.get("/").content.decode()
+        ld = json.loads(re.search(r'application/ld\+json">(.*?)</script>', html, re.S).group(1))
+        lugar = [n for n in ld["@graph"] if n["@type"] != "WebSite"][0]
+        self.assertEqual(lugar["email"], "billaresguayabal1@gmail.com")
+        self.assertEqual(lugar["telephone"], "+57 314 773 0533")
+        self.assertEqual(lugar["address"]["streetAddress"], "Carrera 52 #9-17, Guayabal, Medellín")
+        self.assertEqual(lugar["sameAs"], ["https://www.instagram.com/clubdebillaresguayabal/"])  # sin Facebook
+        self.assertIn("openingHoursSpecification", lugar)
+
+    def test_pie_y_contacto_muestran_correo_e_instagram_con_enlaces_seguros(self):
+        html = self.client.get("/contacto/").content.decode()
+        self.assertIn("mailto:billaresguayabal1@gmail.com", html)
+        self.assertIn('href="https://www.instagram.com/clubdebillaresguayabal/" target="_blank" rel="noopener noreferrer"', html)
+        self.assertNotIn("facebook.com", html)
+
+    def test_no_quedan_datos_pendientes(self):
+        from . import negocio
+
+        self.assertEqual(negocio.datos_pendientes(), [])
