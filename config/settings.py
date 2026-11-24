@@ -8,6 +8,8 @@ Variables de entorno (ver .env.example):
   DATABASE_URL        postgres://... en producción (sin ella se usa SQLite local)
   SITE_URL            URL pública (canonical, sitemap, Open Graph)
   GA_ID               Google Analytics 4 (opcional)
+
+En Vercel la variable VERCEL=1 existe automáticamente y activa los ajustes para funciones sin servidor.
 """
 import os
 from pathlib import Path
@@ -24,6 +26,7 @@ def _env_bool(nombre: str, defecto: bool = False) -> bool:
 
 
 DEBUG = _env_bool("DJANGO_DEBUG", False)
+EN_VERCEL = bool(os.environ.get("VERCEL"))
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 if not SECRET_KEY:
@@ -35,6 +38,9 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):  # Render lo define automáticamente (su-app.onrender.com)
     ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
+for _var in ("VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_URL", "VERCEL_BRANCH_URL"):  # Vercel las define solo
+    if os.environ.get(_var):
+        ALLOWED_HOSTS.append(os.environ[_var])
 CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h not in {"localhost", "127.0.0.1"}]
 
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")
@@ -86,8 +92,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Base de datos: PostgreSQL en producción (DATABASE_URL), SQLite en desarrollo.
 # En PostgreSQL una restricción de exclusión impide reservas solapadas a nivel de base de datos.
-if os.environ.get("DATABASE_URL"):
-    DATABASES = {"default": dj_database_url.parse(os.environ["DATABASE_URL"], conn_max_age=600, ssl_require=not DEBUG)}
+URL_BD = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+if URL_BD:
+    # En Vercel cada petición puede ser una instancia nueva: sin conexiones persistentes
+    # y sin cursores del lado del servidor (Neon usa un pool de conexiones).
+    DATABASES = {"default": dj_database_url.parse(URL_BD, conn_max_age=0 if EN_VERCEL else 600, ssl_require=not DEBUG)}
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = EN_VERCEL
 else:
     DATABASES = {
         "default": {
@@ -115,7 +125,9 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not DEBUG else "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    # En Vercel los estáticos los sirve su CDN (collectstatic corre solo al construir).
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not (DEBUG or EN_VERCEL)
+                    else "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -137,7 +149,12 @@ X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 8 * 60 * 60
 
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+# Con PostgreSQL la caché (límite de envíos por IP) vive en la base, compartida entre instancias.
+# La tabla se crea con «manage.py createcachetable» al desplegar.
+if URL_BD:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "club_cache"}}
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 LOGGING = {
     "version": 1,
