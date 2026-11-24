@@ -53,6 +53,12 @@
     outline-offset: 3px;
     border-radius: 2px;
   }
+  /* La misma letra y el mismo peso en todo texto de título (precios, números, nombres de mesa): sin esto
+     un `font-display` suelto heredaba peso 400 y se dibujaba en 500, distinto de los títulos. */
+  .font-display {
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
   h1, h2, h3 {
     font-family: var(--font-display);
     font-weight: 700;

@@ -93,6 +93,8 @@ def _mesas_por_modalidad():
     grupos = []
     for clave, nombre in Modalidad.choices:
         mesas = list(Mesa.objects.filter(activa=True, modalidad=clave).order_by("orden", "id"))
+        for mesa in mesas:  # cada mesa tiene su botón «Reservar» con su nombre en el mensaje
+            mesa.wa_url = negocio.enlace_whatsapp(f"reservas_{clave}", extra=f"Mesa: {mesa.nombre}")
         tarifas = {m.tarifa_hora for m in mesas}
         grupos.append({
             "clave": clave, "nombre": nombre, "mesas": mesas, "cantidad": len(mesas),

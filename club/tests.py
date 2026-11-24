@@ -565,6 +565,20 @@ class SoloWhatsAppTests(TestCase):
         self.assertIn("Mesa 1", html)
         self.assertIn("https://wa.me/573147730533?text=", html)
         self.assertNotIn('id="form-reserva"', html)
+        self.assertEqual(html.count("<svg viewBox=\"0 0 240 130\""), 2)  # un dibujo por mesa (2 mesas creadas)
+
+    def test_cada_mesa_tiene_su_boton_reservar_con_su_nombre(self):
+        import re
+        from urllib.parse import unquote
+
+        for i, mod in enumerate(["carambola"] * 5 + ["pool"] * 2, 1):
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, tarifa_hora=15000, orden=i)
+        html = self.client.get("/reservas/").content.decode()
+        botones = re.findall(r'<a href="(https://wa\.me/[^"]+)"[^>]*aria-label="Reservar (Mesa \d) por WhatsApp"[^>]*>', html)
+        self.assertEqual(len(botones), 7)  # un «Reservar» por mesa, debajo de su dibujo
+        for url, nombre in botones:
+            self.assertIn(f"Mesa: {nombre}", unquote(url))  # el mensaje dice qué mesa se quiere
+        self.assertEqual(html.count('<svg viewBox="0 0 240 130"'), 7)
 
     def test_consultar_redirige_a_reservas(self):
         r = self.client.get("/reservas/consultar/")
