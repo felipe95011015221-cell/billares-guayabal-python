@@ -93,9 +93,9 @@ def validar_horario(fecha: date, inicio_min: int, duracion: int, reglas: Reglas,
     """Devuelve un mensaje de error o None si el horario es válido."""
     ahora = ahora or datetime.now(tz=BOGOTA)
     if duracion not in reglas.duraciones:
-        return "Duración no permitida."
+        return "Duración no permitida: elige una de las opciones del asistente."
     if inicio_min % reglas.intervalo_min:
-        return "Hora de inicio no válida."
+        return "Hora de inicio no válida: elige una de las horas disponibles."
     if inicio_min < reglas.hora_apertura or inicio_min + duracion > reglas.hora_cierre:
         return "El horario está fuera del horario de atención."
     ini = instante(fecha, inicio_min)

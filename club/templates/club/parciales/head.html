@@ -1,0 +1,36 @@
+{% load static %}  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1b34">
+  {% if seo_titulo_absoluto %}<title>{{ seo_titulo_absoluto }}</title>{% else %}<title>{% if seo_titulo %}{{ seo_titulo }} · {% endif %}{{ negocio.NOMBRE_CORTO }}</title>{% endif %}
+  <meta name="description" content="{{ seo_descripcion|default:'Club de billar en Guayabal, Medellín. Carambola a tres bandas y pool. Reserva tu mesa en línea, escuela de billar, torneos y eventos.' }}">
+  <meta name="robots" content="{% if seo_noindex %}noindex, follow{% else %}index, follow, max-image-preview:large{% endif %}">
+  <link rel="canonical" href="{{ site_url }}{{ request.path }}">
+  <link rel="alternate" hreflang="es-CO" href="{{ site_url }}{{ request.path }}">
+  <link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ request.path }}">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_CO">
+  <meta property="og:site_name" content="{{ negocio.NOMBRE_CORTO }}">
+  <meta property="og:title" content="{% if seo_titulo_absoluto %}{{ seo_titulo_absoluto }}{% elif seo_titulo %}{{ seo_titulo }}{% else %}{{ negocio.NOMBRE_CORTO }}{% endif %}">
+  <meta property="og:description" content="{{ seo_descripcion|default:'Club de billar en Guayabal, Medellín. Carambola a tres bandas y pool.' }}">
+  <meta property="og:url" content="{{ site_url }}{{ request.path }}">
+  <meta property="og:image" content="{{ site_url }}{% static 'club/img/club/salon-vista-alta-noche.webp' %}">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:width" content="913">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="El salón del Club de Billares Guayabal de noche, con las mesas de carambola ocupadas">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% if seo_titulo_absoluto %}{{ seo_titulo_absoluto }}{% elif seo_titulo %}{{ seo_titulo }}{% else %}{{ negocio.NOMBRE_CORTO }}{% endif %}">
+  <meta name="twitter:description" content="{{ seo_descripcion|default:'Club de billar en Guayabal, Medellín. Carambola a tres bandas y pool.' }}">
+  <meta name="twitter:image" content="{{ site_url }}{% static 'club/img/club/salon-vista-alta-noche.webp' %}">
+  <link rel="icon" href="{% static 'club/img/icon.png' %}" type="image/png" sizes="512x512">
+  <link rel="apple-touch-icon" href="{% static 'club/img/apple-icon.png' %}">
+  <link rel="preload" href="{% static 'club/fonts/bricolage-grotesque-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'club/css/fuentes.css' %}">
+  <link rel="stylesheet" href="{% static 'club/css/sitio.css' %}">
+  <script type="application/ld+json">{{ json_ld|safe }}</script>
+  {% if ga_id %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_id }}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ ga_id }}',{anonymize_ip:true});</script>
+  {% endif %}
+  {% block head %}{% endblock %}

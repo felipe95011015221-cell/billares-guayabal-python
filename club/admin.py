@@ -1,13 +1,18 @@
 """Panel de administración del club (Django admin, en español)."""
+import csv
+
 from django import forms
 from django.conf import settings
+from django import forms
 from django.contrib import admin, messages
 from django.db import IntegrityError, transaction
-from django.utils.html import format_html
+from django.http import HttpResponse
+from django.utils import timezone
+from django.utils.html import format_html, format_html_join
 
 from . import negocio
 from .models import (Ajustes, Bloqueo, Clase, FotoGaleria, InscripcionClase, InscripcionTorneo, Instructor,
-                     MensajeContacto, Mesa, Partido, Reserva, SesionClase, SolicitudEvento, Torneo)
+                     MensajeContacto, Mesa, Partido, Promocion, Reserva, SesionClase, SolicitudEvento, Torneo)
 from .servicios import ErrorNegocio, avanzar_ganadores, generar_cuadro, registrar_historial, verificar_reprogramacion
 from .templatetags.club_tags import fecha_corta, hora
 
@@ -31,6 +36,23 @@ def enlace_whatsapp(celular, texto):
         return "—"
     from urllib.parse import quote
     return format_html('<a href="https://wa.me/57{}?text={}" target="_blank" rel="noopener">{}</a>', celular, quote(texto), celular)
+
+
+def _celda_csv(valor):
+    """Evita inyección de fórmulas al abrir el CSV en Excel/Sheets."""
+    texto = "" if valor is None else str(valor)
+    return "'" + texto if texto[:1] in ("=", "+", "-", "@", "\t", "\r") else texto
+
+
+def respuesta_csv(nombre_archivo, encabezados, filas):
+    resp = HttpResponse(content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="{nombre_archivo}-{timezone.localdate():%Y%m%d}.csv"'
+    resp.write("\ufeff")  # BOM para que Excel respete las tildes
+    w = csv.writer(resp)
+    w.writerow(encabezados)
+    for fila in filas:
+        w.writerow([_celda_csv(c) for c in fila])
+    return resp
 
 
 # ---------------------------------------------------------------- Configuración y mesas
@@ -122,18 +144,39 @@ def _cambiar_estado(modeladmin, request, queryset, estado, accion):
 @admin.register(Reserva)
 class ReservaAdmin(admin.ModelAdmin):
     form = ReservaForm
-    list_display = ["codigo", "estado_color", "fecha", "horario", "mesa", "nombre", "whatsapp", "valor"]
-    list_filter = ["estado", "modalidad", "mesa", ("inicio", admin.DateFieldListFilter)]
-    search_fields = ["codigo", "nombre", "celular", "correo"]
+    list_display = ["codigo", "estado_color", "fecha", "horario", "mesa", "nombre", "whatsapp", "valor", "origen"]
+    list_filter = ["estado", "modalidad", "mesa", "origen", ("inicio", admin.DateFieldListFilter)]
+    search_fields = ["codigo", "nombre", "celular", "correo", "observaciones"]
+    ordering = ["-inicio"]
+    list_select_related = ["mesa"]
     date_hierarchy = "inicio"
     readonly_fields = ["codigo", "creada_en", "historial_legible"]
     fieldsets = [
-        (None, {"fields": ["codigo", "estado", "mesa", "modalidad", "inicio", "fin", "valor_estimado"]}),
+        (None, {"fields": ["codigo", "estado", "mesa", "modalidad", "inicio", "fin", "valor_estimado", "origen"]}),
         ("Cliente", {"fields": ["nombre", "celular", "correo"]}),
         ("Seguimiento", {"fields": ["observaciones", "historial_legible", "creada_en"]}),
     ]
-    actions = ["confirmar", "marcar_en_curso", "finalizar", "cancelar", "rechazar"]
+    actions = ["confirmar", "marcar_en_curso", "finalizar", "cancelar", "rechazar", "exportar_csv"]
     list_per_page = 50
+
+    def get_changeform_initial_data(self, request):
+        datos = super().get_changeform_initial_data(request)
+        datos.setdefault("origen", Reserva.Origen.PANEL)  # las reservas creadas a mano en el panel
+        return datos
+
+    @admin.action(description="Exportar seleccionadas a CSV (Excel)")
+    def exportar_csv(self, request, qs):
+        from .disponibilidad import BOGOTA
+
+        filas = (
+            (r.codigo, r.get_estado_display(), r.inicio.astimezone(BOGOTA).strftime("%Y-%m-%d"),
+             r.inicio.astimezone(BOGOTA).strftime("%H:%M"), r.fin.astimezone(BOGOTA).strftime("%H:%M"),
+             r.mesa.nombre, r.get_modalidad_display(), r.nombre, r.celular, r.correo, r.valor_estimado,
+             r.get_origen_display(), r.observaciones, r.creada_en.astimezone(BOGOTA).strftime("%Y-%m-%d %H:%M"))
+            for r in qs.select_related("mesa").order_by("inicio")
+        )
+        return respuesta_csv("reservas", ["Código", "Estado", "Fecha", "Inicio", "Fin", "Mesa", "Modalidad", "Nombre",
+                                          "Celular", "Correo", "Valor estimado", "Origen", "Observaciones", "Creada"], filas)
 
     @admin.display(description="Estado", ordering="estado")
     def estado_color(self, obj):
@@ -159,8 +202,8 @@ class ReservaAdmin(admin.ModelAdmin):
     def historial_legible(self, obj):
         if not obj.historial:
             return "—"
-        filas = "".join(f"<li>{h['fecha'][:16].replace('T', ' ')} · {h['accion']} {h.get('detalle', '')}</li>" for h in obj.historial)
-        return format_html("<ul style='margin:0;padding-left:16px'>{}</ul>", format_html(filas))
+        filas = format_html_join("", "<li>{} · {} {}</li>", ((h["fecha"][:16].replace("T", " "), h["accion"], h.get("detalle", "")) for h in obj.historial))
+        return format_html("<ul style='margin:0;padding-left:16px'>{}</ul>", filas)
 
     def save_model(self, request, obj, form, change):
         if change and form.changed_data:
@@ -220,11 +263,67 @@ class ClaseAdmin(admin.ModelAdmin):
         return f"$ {obj.precio:,}".replace(",", ".") if obj.precio else "Por confirmar"
 
 
+def _padre(insc):
+    """Horario de clase o torneo al que pertenece la inscripción: de ahí salen el cupo y la restricción de celular."""
+    return insc.sesion if hasattr(insc, "sesion") else insc.torneo
+
+
+def _motivo_bloqueo(modelo, campo, padre, celular, excluir_pk=None):
+    """Razón por la que no se puede dejar una inscripción activa (cupo lleno o celular repetido); None si puede."""
+    activas = modelo.objects.filter(**{campo: padre}).exclude(estado="cancelada")
+    if excluir_pk:
+        activas = activas.exclude(pk=excluir_pk)
+    if activas.filter(celular=celular).exists():
+        return "ese celular ya tiene otra inscripción activa en el mismo horario o torneo"
+    if activas.count() >= padre.cupos:
+        return f"no quedan cupos ({padre.cupos} de {padre.cupos} ocupados)"
+    return None
+
+
+def motivo_no_reactivable(insc):
+    campo = "sesion" if hasattr(insc, "sesion") else "torneo"
+    return _motivo_bloqueo(type(insc), campo, _padre(insc), insc.celular, insc.pk)
+
+
+class InscripcionForm(forms.ModelForm):
+    """Al editar en el panel no deja superar el cupo ni repetir celular (antes: error 500)."""
+
+    def clean(self):
+        datos = super().clean()
+        campo = "sesion" if "sesion" in self.fields else "torneo"
+        padre, celular, estado = datos.get(campo), datos.get("celular"), datos.get("estado")
+        if padre and celular and estado and estado != "cancelada":
+            motivo = _motivo_bloqueo(type(self.instance), campo, padre, celular, self.instance.pk)
+            if motivo:
+                raise forms.ValidationError(f"No se puede dejar la inscripción activa: {motivo}.")
+        return datos
+
+
 def _acciones_inscripcion(nombre_modelo):
     @admin.action(description=f"Confirmar {nombre_modelo} seleccionadas")
     def confirmar(modeladmin, request, qs):
-        n = qs.exclude(estado="confirmada").update(estado="confirmada")
-        modeladmin.message_user(request, f"{n} confirmada(s).", messages.SUCCESS)
+        n = rechazadas = 0
+        for insc in qs.select_related(*(["sesion"] if qs.model is InscripcionClase else ["torneo"])).order_by("creada_en"):
+            if insc.estado == "confirmada":
+                continue
+            try:
+                with transaction.atomic():
+                    # Se bloquea la fila padre para que dos reactivaciones simultáneas no superen el cupo.
+                    type(_padre(insc)).objects.select_for_update().get(pk=_padre(insc).pk)
+                    if insc.estado == "cancelada":
+                        motivo = motivo_no_reactivable(insc)
+                        if motivo:
+                            rechazadas += 1
+                            modeladmin.message_user(request, f"{insc.codigo} · {insc.nombre}: no se reactivó, {motivo}.", messages.WARNING)
+                            continue
+                    insc.estado = "confirmada"
+                    insc.save(update_fields=["estado"])
+                    n += 1
+            except IntegrityError:
+                rechazadas += 1
+                modeladmin.message_user(request, f"{insc.codigo} · {insc.nombre}: no se confirmó porque el celular ya está inscrito.", messages.WARNING)
+        modeladmin.message_user(request, f"{n} inscripción(es) confirmada(s)." + (f" {rechazadas} no se pudieron confirmar." if rechazadas else ""),
+                                messages.SUCCESS if n else messages.INFO)
 
     @admin.action(description=f"Cancelar {nombre_modelo} seleccionadas")
     def cancelar(modeladmin, request, qs):
@@ -236,6 +335,7 @@ def _acciones_inscripcion(nombre_modelo):
 
 @admin.register(InscripcionClase)
 class InscripcionClaseAdmin(admin.ModelAdmin):
+    form = InscripcionForm
     list_display = ["codigo", "estado_color", "sesion", "nombre", "whatsapp", "nivel_declarado", "creada_en"]
     list_filter = ["estado", "sesion__clase"]
     search_fields = ["codigo", "nombre", "celular", "correo"]
@@ -295,6 +395,7 @@ class TorneoAdmin(admin.ModelAdmin):
 
 @admin.register(InscripcionTorneo)
 class InscripcionTorneoAdmin(admin.ModelAdmin):
+    form = InscripcionForm
     list_display = ["codigo", "estado_color", "torneo", "nombre", "whatsapp", "creada_en"]
     list_filter = ["estado", "torneo"]
     search_fields = ["codigo", "nombre", "celular", "documento"]
@@ -334,11 +435,23 @@ class MensajeContactoAdmin(admin.ModelAdmin):
     list_filter = ["leido", "asunto"]
     search_fields = ["nombre", "correo", "mensaje"]
     readonly_fields = ["nombre", "correo", "celular", "asunto", "mensaje", "creado_en"]
-    actions = ["marcar_leidos"]
+    actions = ["marcar_leidos", "marcar_no_leidos", "exportar_csv"]
+    date_hierarchy = "creado_en"
+    ordering = ["leido", "-creado_en"]  # primero los pendientes por leer
 
     @admin.action(description="Marcar como leídos")
     def marcar_leidos(self, request, qs):
         self.message_user(request, f"{qs.update(leido=True)} mensaje(s) marcados como leídos.", messages.SUCCESS)
+
+    @admin.action(description="Marcar como no leídos")
+    def marcar_no_leidos(self, request, qs):
+        self.message_user(request, f"{qs.update(leido=False)} mensaje(s) marcados como no leídos.", messages.SUCCESS)
+
+    @admin.action(description="Exportar seleccionados a CSV (Excel)")
+    def exportar_csv(self, request, qs):
+        filas = ((m.creado_en.astimezone(timezone.get_current_timezone()).strftime("%Y-%m-%d %H:%M"), m.nombre, m.correo, m.celular,
+                  m.get_asunto_display(), "Sí" if m.leido else "No", m.mensaje) for m in qs.order_by("creado_en"))
+        return respuesta_csv("mensajes-contacto", ["Fecha", "Nombre", "Correo", "Celular", "Asunto", "Leído", "Mensaje"], filas)
 
     def has_add_permission(self, request):
         return False
@@ -357,6 +470,27 @@ class FotoGaleriaAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return ["imagen"] if settings.EN_VERCEL else []
 
-    @admin.display(description="Foto")
     def miniatura(self, obj):
         return format_html('<img src="{}" style="height:56px;border-radius:6px">', obj.url) if obj.url else "—"
+
+
+@admin.register(Promocion)
+class PromocionAdmin(admin.ModelAdmin):
+    list_display = ["titulo", "vigencia", "destacada", "activa", "orden", "es_ejemplo"]
+    list_editable = ["destacada", "activa", "orden"]
+    list_filter = ["activa", "destacada"]
+    search_fields = ["titulo", "descripcion"]
+    fieldsets = [
+        (None, {"fields": ["titulo", "descripcion", "activa", "destacada", "orden"],
+                "description": "Solo se muestran en la web las promociones activas y vigentes (máximo 3, por orden)."}),
+        ("Vigencia (opcional)", {"fields": ["vigencia_desde", "vigencia_hasta"]}),
+        ("Botón (opcional)", {"fields": ["enlace_url", "enlace_texto"]}),
+    ]
+
+    @admin.display(description="Vigencia")
+    def vigencia(self, obj):
+        return obj.vigencia_texto or "Sin fechas"
+
+    @admin.display(description="Demo", boolean=True)
+    def es_ejemplo(self, obj):
+        return obj.ejemplo

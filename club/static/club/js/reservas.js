@@ -14,6 +14,7 @@
     bloqueada: { texto: "Bloqueada", clase: "border-marfil/20 text-marfil/50", punto: "bg-marfil/40" },
   };
   const NOMBRES_PASO = ["Modalidad", "Fecha y hora", "Mesa", "Tus datos"];
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const cop = (v) => (v == null ? "Tarifa por confirmar" : "$ " + Number(v).toLocaleString("es-CO"));
   const fmtFecha = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota", weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const fmtHora = new Intl.DateTimeFormat("es-CO", { timeZone: "America/Bogota", hour: "numeric", minute: "2-digit", hour12: true });
@@ -30,7 +31,7 @@
     $$("[data-paso-ind]").forEach((li) => {
       const i = Number(li.dataset.pasoInd);
       li.querySelector("span").className = `block h-0.5 rounded-full ${i <= p ? "bg-oro" : "bg-marfil/15"}`;
-      const t = li.querySelectorAll("span")[1]; t.classList.toggle("text-oro", i === p); t.classList.toggle("text-marfil/45", i !== p);
+      const t = li.querySelectorAll("span")[1]; t.classList.toggle("text-oro", i === p); t.classList.toggle("text-marfil/75", i !== p);
     });
     $("#paso-movil").textContent = `Paso ${p + 1} de 4 · ${NOMBRES_PASO[p]}`;
     $("#asistente").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -63,7 +64,7 @@
     $("#mes-anterior").disabled = st.mes <= cfg.hoy.slice(0, 7);
     $("#mes-siguiente").disabled = st.mes >= cfg.maximo.slice(0, 7);
     const cal = $("#calendario");
-    cal.innerHTML = DIAS.map((d) => `<div class="pb-2 text-center text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-marfil/40">${d}</div>`).join("");
+    cal.innerHTML = DIAS.map((d) => `<div class="pb-2 text-center text-xs font-semibold text-marfil/40">${d}</div>`).join("");
     const desfase = (new Date(Date.UTC(a, m - 1, 1)).getUTCDay() + 6) % 7;
     const diasMes = new Date(Date.UTC(a, m, 0)).getUTCDate();
     for (let i = 0; i < desfase; i++) cal.insertAdjacentHTML("beforeend", "<div></div>");
@@ -117,7 +118,7 @@
         const b = document.createElement("button");
         b.type = "button"; b.disabled = f.libres === 0;
         b.className = `flex h-14 flex-col items-center justify-center rounded-xl border text-sm transition ${f.libres === 0 ? "cursor-not-allowed border-marfil/5 text-marfil/25 line-through" : "border-marfil/15 hover:border-oro/60"}`;
-        b.innerHTML = `<span class="font-semibold">${f.etiqueta}</span><span class="text-[0.6rem] uppercase tracking-[0.1em] opacity-60">${f.libres === 0 ? "Sin mesas" : `${f.libres} libre${f.libres > 1 ? "s" : ""}`}</span>`;
+        b.innerHTML = `<span class="font-semibold">${esc(f.etiqueta)}</span><span class="text-xs opacity-60">${f.libres === 0 ? "Sin mesas" : `${f.libres} libre${f.libres > 1 ? "s" : ""}`}</span>`;
         b.addEventListener("click", () => { st.inicio = f.inicio_min; st.mesa = null; irA(2); });
         grid.appendChild(b);
       });
@@ -151,8 +152,8 @@
       const b = document.createElement("button");
       b.type = "button"; b.disabled = !libre; b.setAttribute("aria-pressed", String(sel));
       b.className = `rounded-2xl border p-6 text-left transition ${sel ? "border-oro bg-oro/10" : libre ? "border-marfil/15 hover:-translate-y-0.5 hover:border-oro/60" : "cursor-not-allowed border-marfil/10 opacity-55"}`;
-      b.innerHTML = `${miniMesa(libre)}<span class="mt-5 flex items-center justify-between"><span class="font-display text-2xl">${m.nombre}</span>${sel ? '<span class="text-oro">✓</span>' : ""}</span>
-        <span class="mt-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.12em] ${ui.clase}"><span class="h-1.5 w-1.5 rounded-full ${ui.punto}"></span>${ui.texto}</span>
+      b.innerHTML = `${miniMesa(libre)}<span class="mt-5 flex items-center justify-between"><span class="font-display text-2xl">${esc(m.nombre)}</span>${sel ? '<span class="text-oro">✓</span>' : ""}</span>
+        <span class="mt-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${ui.clase}"><span class="h-1.5 w-1.5 rounded-full ${ui.punto}"></span>${ui.texto}</span>
         <span class="mt-3 block text-xs text-marfil/55">${m.tarifa_hora == null ? "Tarifa por confirmar" : `${cop(m.tarifa_hora)} / hora`}</span>`;
       b.addEventListener("click", () => { st.mesa = m.id; pintarMesas(); resumen(); });
       caja.appendChild(b);
@@ -208,7 +209,9 @@
     $("#res-fecha").textContent = `${fmtFecha.format(ini)} · ${fmtHora.format(ini)} – ${fmtHora.format(fin)}`;
     const texto = `Reserva Club de Billares Guayabal\nCódigo: ${d.codigo}\nEstado: ${d.estado_texto}\n${d.modalidad === "pool" ? "Pool" : "Carambola"} · ${d.mesa}\n${fmtFecha.format(ini)}, ${fmtHora.format(ini)} – ${fmtHora.format(fin)}`;
     $("#res-compartir").href = `https://wa.me/?text=${encodeURIComponent(texto)}`;
-    $("#res-avisar").href = `${cfg.whatsapp}${encodeURIComponent("\n\n" + texto)}`;
+    // El servidor devuelve el enlace de WhatsApp ya prellenado con el código; si faltara, se arma en el navegador.
+    $("#res-avisar").href = d.whatsapp_url || `${cfg.whatsapp}${encodeURIComponent("\n\n" + texto)}`;
+    if (typeof window.evento === "function") { try { window.evento("reserva_creada", { modalidad: d.modalidad }); } catch (_) { /* la analítica nunca debe romper la reserva */ } }
     res.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 

@@ -1,21 +1,23 @@
 <div class="grid gap-10 lg:grid-cols-12 lg:gap-14">
   <div class="lg:col-span-5">
     <dl class="space-y-7">
-      <div><dt class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] opacity-60">Dirección</dt><dd class="mt-2 font-display text-3xl leading-tight">{{ negocio.DIRECCION.valor }}</dd></div>
-      <div><dt class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] opacity-60">Teléfono y WhatsApp</dt><dd class="mt-2 text-lg"><a href="{{ enlace_llamar }}" class="underline-offset-4 hover:underline">{{ negocio.TELEFONO.valor }}</a></dd></div>
-      <div><dt class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] opacity-60">Horario</dt><dd class="mt-2 text-lg">{{ negocio.HORARIO.valor }} <span class="text-sm opacity-60">(por confirmar)</span></dd></div>
+      <div><dt class="text-sm font-semibold opacity-75">Dirección</dt><dd class="mt-2 font-display text-3xl leading-tight">{{ negocio.DIRECCION.valor }}{% if negocio.DIRECCION.por_confirmar %} <span class="font-sans text-sm font-medium opacity-80">(por confirmar)</span>{% endif %}</dd></div>
+      <div><dt class="text-sm font-semibold opacity-75">Teléfono y WhatsApp</dt><dd class="mt-2 text-lg"><a href="{{ enlace_llamar }}" data-evento="cta_llamar" data-evento-origen="ubicacion" class="inline-flex min-h-11 items-center underline underline-offset-4">{{ negocio.TELEFONO.valor }}</a>{% if negocio.TELEFONO.por_confirmar %} <span class="text-sm opacity-80">(por confirmar)</span>{% endif %}</dd></div>
+      <div><dt class="text-sm font-semibold opacity-75">Horario</dt><dd class="mt-2 text-lg">{{ negocio.HORARIO.valor }}{% if negocio.HORARIO.por_confirmar %} <span class="text-sm opacity-80">(por confirmar)</span>{% endif %}</dd></div>
     </dl>
     <div class="mt-10 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-      <a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" class="btn btn-md btn-verde">Cómo llegar</a>
-      <a href="{{ enlace_llamar }}" class="btn btn-md btn-oscuro">Llamar</a>
-      <a href="{{ wa_ubicacion }}" target="_blank" rel="noopener noreferrer" class="btn btn-md btn-oscuro">{% include "club/parciales/icono_whatsapp.html" with clase="h-4 w-4" %}WhatsApp</a>
+      <a href="{{ enlace_como_llegar }}" target="_blank" rel="noopener noreferrer" data-evento="cta_como_llegar" data-evento-origen="ubicacion" class="btn btn-md btn-verde">Cómo llegar</a>
+      <a href="{{ enlace_llamar }}" data-evento="cta_llamar" data-evento-origen="ubicacion" class="btn btn-md btn-oscuro">Llamar</a>
+      <a href="{{ wa_ubicacion }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="ubicacion" class="btn btn-md btn-oscuro">{% include "club/parciales/icono_whatsapp.html" with clase="h-4 w-4" %}WhatsApp</a>
     </div>
-    <div class="aviso mt-8 text-carbon/80"><p>Dirección, teléfono y horario provienen de fuentes públicas y están pendientes de validación por el club. Antes de tu visita, confírmalos por WhatsApp.</p></div>
+    {% if negocio.DIRECCION.por_confirmar or negocio.TELEFONO.por_confirmar or negocio.HORARIO.por_confirmar %}
+    <div class="aviso mt-8 text-carbon/85"><p>Dirección, teléfono y horario provienen de fuentes públicas y están pendientes de validación por el club. Antes de tu visita, confírmalos por WhatsApp.</p></div>
+    {% endif %}
   </div>
   <div class="lg:col-span-7">
     <div class="relative aspect-[4/3] overflow-hidden rounded-2xl border border-carbon/10 bg-marfil-2 lg:aspect-auto lg:h-full lg:min-h-[440px]">
       <iframe title="Mapa de ubicación del {{ negocio.NOMBRE_CORTO }}" src="{{ enlace_mapa_embebido }}" class="absolute inset-0 h-full w-full grayscale-[35%]" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
-    <a href="{{ enlace_mapa }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-block text-xs underline-offset-4 opacity-60 hover:underline">Abrir en Google Maps</a>
+    <a href="{{ enlace_mapa }}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex min-h-11 items-center text-sm underline underline-offset-4">Abrir en Google Maps</a>
   </div>
 </div>

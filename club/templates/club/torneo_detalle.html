@@ -1,35 +1,36 @@
 {% extends "club/base.html" %}{% load club_tags %}
 {% block contenido %}
-<section class="relative overflow-hidden bg-carbon pb-16 pt-36 text-marfil sm:pt-44">
+<section class="relative overflow-hidden bg-carbon pb-12 pt-32 text-marfil sm:pt-40">
   <div class="contenedor">
-    <a href="{% url 'torneos' %}" class="text-xs uppercase tracking-[0.18em] text-marfil/55 hover:text-oro">← Torneos</a>
+    <a href="{% url 'torneos' %}" class="enlace-texto -ml-1"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>Volver a torneos</a>
     <div class="mt-8 flex flex-wrap gap-2"><span class="insignia insignia-{{ t.tono }}">{{ t.get_estado_display }}</span><span class="insignia insignia-oro">{% if t.modalidad == "carambola" %}Tres bandas{% else %}Pool{% endif %}</span></div>
     <h1 class="mt-6 max-w-4xl font-display text-5xl leading-[0.95] sm:text-7xl">{{ t.nombre }}</h1>
-    <p class="mt-6 max-w-2xl text-lg text-marfil/70">{{ t.descripcion }}</p>
+    <p class="mt-6 max-w-2xl text-lg text-marfil/85">{{ t.descripcion }}</p>
+    {% if abierto %}<a href="#inscripcion" class="btn btn-lg btn-oro mt-8">Inscribirme al torneo</a>{% else %}<a href="{{ wa_torneos }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="torneo_detalle" class="btn btn-lg btn-contorno mt-8">Preguntar por WhatsApp</a>{% endif %}
   </div>
 </section>
 <section class="seccion tono-oscuro !pt-0">
   <div class="contenedor grid gap-12 lg:grid-cols-12">
     <div class="space-y-14 lg:col-span-7">
       <dl class="grid gap-px overflow-hidden rounded-2xl border border-marfil/10 bg-marfil/10 sm:grid-cols-2">
-        <div class="bg-carbon p-6"><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-marfil/50">Fecha</dt><dd class="mt-2 text-lg">{{ t.fecha|fecha_larga }} · {{ t.fecha|hora }}</dd></div>
-        <div class="bg-carbon p-6"><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-marfil/50">Formato</dt><dd class="mt-2 text-lg">{{ t.formato|default:"Por publicar" }}</dd></div>
-        <div class="bg-carbon p-6"><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-marfil/50">Inscripción</dt><dd class="mt-2 text-lg">{{ t.valor_inscripcion|cop }}</dd></div>
-        <div class="bg-carbon p-6"><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-marfil/50">Cupos</dt><dd class="mt-2 text-lg">{{ t.libres }} disponibles de {{ t.cupos }}</dd></div>
-        <div class="bg-carbon p-6 sm:col-span-2"><dt class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-marfil/50">Requisitos</dt><dd class="mt-2 text-marfil/80">{{ t.requisitos|default:"Por publicar." }}</dd></div>
+        <div class="bg-carbon p-6"><dt class="text-sm font-semibold text-marfil/75">Fecha</dt><dd class="mt-2 text-lg">{{ t.fecha|fecha_larga }} · {{ t.fecha|hora }}</dd></div>
+        <div class="bg-carbon p-6"><dt class="text-sm font-semibold text-marfil/75">Formato</dt><dd class="mt-2 text-lg">{{ t.formato|default:"Por publicar" }}</dd></div>
+        <div class="bg-carbon p-6"><dt class="text-sm font-semibold text-marfil/75">Inscripción</dt><dd class="mt-2 text-lg">{{ t.valor_inscripcion|cop }}</dd></div>
+        <div class="bg-carbon p-6"><dt class="text-sm font-semibold text-marfil/75">Cupos</dt><dd class="mt-2 text-lg">{{ t.libres }} disponibles de {{ t.cupos }}</dd></div>
+        <div class="bg-carbon p-6 sm:col-span-2"><dt class="text-sm font-semibold text-marfil/75">Requisitos</dt><dd class="mt-2 text-marfil/80">{{ t.requisitos|default:"Por publicar." }}</dd></div>
       </dl>
       {% if cuadro %}
       <div>
         <h2 class="font-display text-4xl">Cuadro de eliminación</h2>
-        <p class="mt-2 text-sm text-marfil/55">Resultados actualizados por el club.</p>
+        <p class="mt-2 text-sm text-marfil/75">Resultados actualizados por el club.</p>
         <div class="-mx-5 mt-8 overflow-x-auto px-5 pb-4 sm:mx-0 sm:px-0"><div class="flex min-w-max gap-6">
           {% for ronda in cuadro %}
-          <div class="flex w-60 flex-col"><p class="mb-4 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-oro">{{ ronda.nombre }}</p>
+          <div class="flex w-60 flex-col"><p class="mb-4 text-sm font-semibold text-oro">{{ ronda.nombre }}</p>
             <div class="flex flex-1 flex-col justify-around gap-4">
               {% for p in ronda.partidos %}
               <div class="overflow-hidden rounded-xl border border-marfil/10 bg-carbon-2 text-sm">
-                <div class="flex justify-between gap-3 border-b border-marfil/5 px-4 py-2.5 {% if p.ganador == 'A' %}bg-oro/10{% endif %}"><span class="truncate {% if p.ganador == 'A' %}font-semibold text-oro{% elif not p.jugador_a %}italic text-marfil/30{% endif %}">{{ p.jugador_a|default:"Por definir" }}</span><span class="tabular-nums {% if p.ganador == 'A' %}text-oro{% else %}text-marfil/50{% endif %}">{{ p.marcador_a|default_if_none:"–" }}</span></div>
-                <div class="flex justify-between gap-3 px-4 py-2.5 {% if p.ganador == 'B' %}bg-oro/10{% endif %}"><span class="truncate {% if p.ganador == 'B' %}font-semibold text-oro{% elif not p.jugador_b %}italic text-marfil/30{% endif %}">{{ p.jugador_b|default:"Por definir" }}</span><span class="tabular-nums {% if p.ganador == 'B' %}text-oro{% else %}text-marfil/50{% endif %}">{{ p.marcador_b|default_if_none:"–" }}</span></div>
+                <div class="flex justify-between gap-3 border-b border-marfil/5 px-4 py-2.5 {% if p.ganador == 'A' %}bg-oro/10{% endif %}"><span class="truncate {% if p.ganador == 'A' %}font-semibold text-oro{% elif not p.jugador_a %}italic text-marfil/75{% endif %}">{{ p.jugador_a|default:"Por definir" }}</span><span class="tabular-nums {% if p.ganador == 'A' %}text-oro{% else %}text-marfil/75{% endif %}">{{ p.marcador_a|default_if_none:"–" }}</span></div>
+                <div class="flex justify-between gap-3 px-4 py-2.5 {% if p.ganador == 'B' %}bg-oro/10{% endif %}"><span class="truncate {% if p.ganador == 'B' %}font-semibold text-oro{% elif not p.jugador_b %}italic text-marfil/75{% endif %}">{{ p.jugador_b|default:"Por definir" }}</span><span class="tabular-nums {% if p.ganador == 'B' %}text-oro{% else %}text-marfil/75{% endif %}">{{ p.marcador_b|default_if_none:"–" }}</span></div>
               </div>
               {% endfor %}
             </div>
@@ -40,7 +41,7 @@
       {% endif %}
       {% if confirmados %}<div><h2 class="font-display text-4xl">Participantes confirmados</h2><ul class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">{% for p in confirmados %}<li class="rounded-lg border border-marfil/10 px-4 py-3 text-sm">{{ p.nombre }}</li>{% endfor %}</ul></div>{% endif %}
     </div>
-    <aside class="lg:col-span-5">
+    <aside id="inscripcion" class="scroll-mt-28 lg:col-span-5">
       <div class="sticky top-28 rounded-3xl border border-oro/25 bg-carbon-2 p-7 sm:p-9">
         <h2 class="font-display text-3xl">Inscripción</h2>
         {% if abierto %}
@@ -53,15 +54,15 @@
             <div><label class="etiqueta-campo" for="t-correo">Correo</label><input id="t-correo" name="correo" type="email" class="campo"><p data-error="correo" class="error-campo oculto"></p></div>
           </div>
           <div><label class="etiqueta-campo" for="t-doc">Documento (opcional)</label><input id="t-doc" name="documento" inputmode="numeric" class="campo"></div>
-          <label class="flex cursor-pointer gap-3 text-sm opacity-80"><input type="checkbox" name="acepta_reglamento" class="mt-0.5 h-5 w-5 shrink-0 accent-[#c5a36a]"><span>Leí y acepto los requisitos y el formato del torneo.</span></label><p data-error="acepta_reglamento" class="error-campo oculto"></p>
-          <label class="flex cursor-pointer gap-3 text-sm opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#c5a36a]"><span>Autorizo el tratamiento de mis datos para gestionar la inscripción (Ley 1581 de 2012).</span></label><p data-error="acepta_datos" class="error-campo oculto"></p>
+          <label class="flex cursor-pointer gap-3 text-sm opacity-80"><input type="checkbox" name="acepta_reglamento" class="mt-0.5 h-5 w-5 shrink-0 accent-[#f2c230]"><span>Leí y acepto los requisitos y el formato del torneo.</span></label><p data-error="acepta_reglamento" class="error-campo oculto"></p>
+          <label class="flex cursor-pointer gap-3 text-sm opacity-80"><input type="checkbox" name="acepta_datos" class="mt-0.5 h-5 w-5 shrink-0 accent-[#f2c230]"><span>Autorizo el tratamiento de mis datos para gestionar la inscripción (Ley 1581 de 2012).</span></label><p data-error="acepta_datos" class="error-campo oculto"></p>
           <p data-error-general class="oculto rounded-xl border border-error/40 bg-error/10 p-3 text-sm"></p>
-          <button type="submit" class="btn btn-lg btn-oro w-full">Inscribirme al torneo</button>
+          <button type="submit" class="btn btn-lg btn-oro w-full">Enviar inscripción</button>
         </form>
         <div id="exito-torneo" role="status" class="oculto mt-6 rounded-2xl border border-oro/40 bg-oro/10 p-6"><p class="font-display text-2xl text-oro">✓ Inscripción recibida</p><p class="mt-2 text-sm text-marfil/75">Código <strong class="font-mono" data-codigo></strong>. Tu inscripción queda <strong>pendiente de confirmación</strong> hasta que el club valide los requisitos y el pago.</p></div>
         {% else %}
         <p class="mt-6 text-marfil/70">{% if t.estado == "inscripciones_abiertas" %}No quedan cupos disponibles.{% else %}Las inscripciones no están abiertas en este momento.{% endif %}</p>
-        <a href="{{ wa_torneos }}" target="_blank" rel="noopener noreferrer" class="btn btn-md btn-contorno mt-5">Preguntar por WhatsApp</a>
+        <a href="{{ wa_torneos }}" target="_blank" rel="noopener noreferrer" data-evento="cta_whatsapp" data-evento-origen="torneo_cerrado" class="btn btn-md btn-contorno mt-5">Preguntar por WhatsApp</a>
         {% endif %}
       </div>
     </aside>

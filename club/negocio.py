@@ -56,12 +56,14 @@ def datos_pendientes():
 
 # ---------- WhatsApp, llamadas y mapas ----------
 MENSAJES_WHATSAPP = {
-    "general": "Hola, Club de Billares Guayabal. Quisiera más información sobre el club.",
-    "reservas": "Hola, Club de Billares Guayabal. Quisiera reservar una mesa. ¿Me ayudan con la disponibilidad?",
-    "clases": "Hola, Club de Billares Guayabal. Me interesan las clases de billar. ¿Qué programas y horarios tienen?",
-    "torneos": "Hola, Club de Billares Guayabal. Quisiera información sobre los próximos torneos y cómo inscribirme.",
-    "eventos": "Hola, Club de Billares Guayabal. Quisiera cotizar un evento en el club.",
-    "ubicacion": "Hola, Club de Billares Guayabal. ¿Me confirman la dirección y cómo llegar?",
+    "general": "Hola, Club de Billares Guayabal. Los escribo desde su página web y quisiera más información sobre el club.",
+    "reservas": "Hola, Club de Billares Guayabal. Los escribo desde su página web: quisiera reservar una mesa.\n\nModalidad (carambola o pool):\nFecha y hora:\nCuántas personas:\n\n¿Me ayudan con la disponibilidad?",
+    "reservas_carambola": "Hola, Club de Billares Guayabal. Los escribo desde su página web: quisiera reservar una mesa de carambola a tres bandas.\n\nFecha y hora:\nCuántas personas:\n\n¿Me ayudan con la disponibilidad?",
+    "reservas_pool": "Hola, Club de Billares Guayabal. Los escribo desde su página web: quisiera reservar una mesa de pool.\n\nFecha y hora:\nCuántas personas:\n\n¿Me ayudan con la disponibilidad?",
+    "clases": "Hola, Club de Billares Guayabal. Los escribo desde la página de la escuela: me interesan las clases de billar.\n\nModalidad (carambola o pool):\nMi nivel (nunca he jugado, ocasional, frecuente):\n\n¿Qué programas y horarios tienen?",
+    "torneos": "Hola, Club de Billares Guayabal. Los escribo desde la página de torneos: quisiera información sobre los próximos torneos y cómo inscribirme.\n\nModalidad de interés (carambola o pool):",
+    "eventos": "Hola, Club de Billares Guayabal. Los escribo desde la página de eventos: quisiera cotizar un evento en el club.\n\nTipo de evento (empresarial, cumpleaños, otro):\nFecha deseada:\nNúmero de personas:",
+    "ubicacion": "Hola, Club de Billares Guayabal. Los escribo desde su página web: ¿me confirman la dirección y cómo llegar?",
 }
 
 
@@ -114,24 +116,24 @@ class Foto:
 
 U, P = "Unsplash", "Pexels"
 FOTOS = {
-    "hero_salon": Foto("hero-salon.webp", "Salón de billar en penumbra con bolas y un taco sobre el paño", 2400, 1600, "ambiente", "Wecko Helios", U, "https://unsplash.com/photos/DObE_YU6oks"),
-    "bolas_bokeh": Foto("bolas-bokeh.webp", "Bolas de pool en primer plano con luces cálidas al fondo", 2400, 1600, "pool", "Christian Wiediger", U, "https://unsplash.com/photos/QnDhG4nNCVQ"),
-    "tres_bolas": Foto("tres-bolas.webp", "Tres bolas junto a la buchaca de una mesa de fieltro verde", 1600, 2387, "detalle", "Maximilian Bungart", U, "https://unsplash.com/photos/S4iH6Yso6cs"),
-    "tiro_mesa_verde": Foto("tiro-mesa-verde.webp", "Vista cenital de un tiro con taco sobre una mesa verde", 2400, 1600, "pool", "cal gao", U, "https://unsplash.com/photos/yV5awvq2hiI"),
-    "mano_taco": Foto("mano-taco.webp", "Mano formando el puente con el taco frente a la bola blanca", 1600, 2413, "detalle", "Valeria Kodra", U, "https://unsplash.com/photos/2SiUvKOT6Cg"),
-    "triangulo_bolas": Foto("triangulo-bolas.webp", "Bolas numeradas ordenadas dentro de un triángulo de madera", 2400, 1600, "detalle", "gladys rovetta", U, "https://unsplash.com/photos/Xpo7AhoJdNM"),
-    "mesa_azul_tacos": Foto("mesa-azul-tacos.webp", "Mesa de paño azul con dos tacos y el triángulo armado", 2400, 1800, "detalle", "Saint Rambo", U, "https://unsplash.com/photos/BhvoOhQMv5I"),
-    "triangulo_tacos": Foto("triangulo-tacos.webp", "Tacos cruzados sobre el triángulo de bolas listo para el saque", 2400, 1537, "detalle", "Marcelo Leal", U, "https://unsplash.com/photos/6UeBe2HqziA"),
-    "salon_mesas": Foto("salon-mesas.webp", "Hilera de mesas de billar iluminadas en un salón oscuro", 2400, 1600, "ambiente", "Vazha Despotashvili", P, "https://www.pexels.com/photo/blue-billiard-tables-6032656/"),
-    "jugador_salon": Foto("jugador-salon.webp", "Jugador apuntando en una mesa grande bajo lámparas colgantes", 2400, 1600, "ambiente", "Tima Miroshnichenko", P, "https://www.pexels.com/photo/a-man-playing-billiard-6254197/"),
+    "hero_salon": Foto("hero-salon.webp", "Foto de referencia: salón de billar en penumbra con bolas y un taco sobre el paño", 2400, 1600, "ambiente", "Wecko Helios", U, "https://unsplash.com/photos/DObE_YU6oks"),
+    "bolas_bokeh": Foto("bolas-bokeh.webp", "Foto de referencia: bolas de pool en primer plano con luces cálidas al fondo", 2400, 1600, "pool", "Christian Wiediger", U, "https://unsplash.com/photos/QnDhG4nNCVQ"),
+    "tres_bolas": Foto("tres-bolas.webp", "Foto de referencia: tres bolas de pool junto a la buchaca de una mesa de paño verde", 1600, 2387, "detalle", "Maximilian Bungart", U, "https://unsplash.com/photos/S4iH6Yso6cs"),
+    "tiro_mesa_verde": Foto("tiro-mesa-verde.webp", "Foto de referencia: vista desde arriba de un tiro de pool sobre una mesa de paño verde", 2400, 1600, "pool", "cal gao", U, "https://unsplash.com/photos/yV5awvq2hiI"),
+    "mano_taco": Foto("mano-taco.webp", "Foto de referencia: mano formando el puente con el taco frente a la bola blanca, técnica básica de billar", 1600, 2413, "detalle", "Valeria Kodra", U, "https://unsplash.com/photos/2SiUvKOT6Cg"),
+    "triangulo_bolas": Foto("triangulo-bolas.webp", "Foto de referencia: bolas numeradas de pool ordenadas en el triángulo antes del saque", 2400, 1600, "detalle", "gladys rovetta", U, "https://unsplash.com/photos/Xpo7AhoJdNM"),
+    "mesa_azul_tacos": Foto("mesa-azul-tacos.webp", "Foto de referencia: mesa de pool de paño azul con dos tacos y el triángulo armado", 2400, 1800, "detalle", "Saint Rambo", U, "https://unsplash.com/photos/BhvoOhQMv5I"),
+    "triangulo_tacos": Foto("triangulo-tacos.webp", "Foto de referencia: tacos cruzados sobre el triángulo de bolas, listos para un torneo de pool", 2400, 1537, "detalle", "Marcelo Leal", U, "https://unsplash.com/photos/6UeBe2HqziA"),
+    "salon_mesas": Foto("salon-mesas.webp", "Foto de referencia: hilera de mesas de billar iluminadas en un salón oscuro", 2400, 1600, "ambiente", "Vazha Despotashvili", P, "https://www.pexels.com/photo/blue-billiard-tables-6032656/"),
+    "jugador_salon": Foto("jugador-salon.webp", "Foto de referencia: jugador apuntando en una mesa de billar bajo lámparas colgantes", 2400, 1600, "ambiente", "Tima Miroshnichenko", P, "https://www.pexels.com/photo/a-man-playing-billiard-6254197/"),
 }
 FOTOS_REFERENCIA = list(FOTOS.values())
 
 # Fotos reales del club
-JUGADOR_ESTUDIO = Foto("club/jugador-estudio.webp", "Jugador de camiseta naranja concentrado mientras apunta su tiro sobre una mesa de paño azul", 1554, 1204, "carambola")
+JUGADOR_ESTUDIO = Foto("club/jugador-estudio.webp", "Jugador del Club de Billares Guayabal concentrado en su tiro de carambola sobre una mesa de paño azul", 1554, 1204, "carambola")
 FOTOS_INICIO = [
     Foto("club/salon-mesas-carambola.webp", "Salón del Club de Billares Guayabal con mesas de carambola de paño azul y jugadores al fondo", 960, 1200, "carambola"),
-    Foto("club/mesa-carambola-detalle.webp", "Mesa de carambola del club en primer plano con bolas blanca y roja sobre el paño azul", 960, 1200, "carambola"),
+    Foto("club/mesa-carambola-detalle.webp", "Mesa de carambola a tres bandas del Club de Billares Guayabal con las bolas blanca y roja sobre el paño azul", 960, 1200, "carambola"),
 ]
 GALERIA_INICIAL = [
     Foto("club/salon-panoramico.webp", "Vista desde el segundo piso del salón del Club de Billares Guayabal con sus mesas de carambola en juego", 913, 1220, "ambiente"),

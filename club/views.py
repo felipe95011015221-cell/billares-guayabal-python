@@ -9,13 +9,21 @@ from django.utils import timezone
 
 from . import negocio
 from .disponibilidad import etiqueta_duracion, hoy_bogota
-from .models import Ajustes, Clase, FotoGaleria, Modalidad, SolicitudEvento, Torneo
+from .models import Ajustes, Clase, FotoGaleria, Modalidad, Promocion, SolicitudEvento, Torneo
 
 ESTADOS_TORNEO_VISIBLES = [Torneo.Estado.ABIERTO, Torneo.Estado.CERRADO, Torneo.Estado.EN_JUEGO]
 TONO_ESTADO_TORNEO = {
     "inscripciones_abiertas": "ok", "inscripciones_cerradas": "alerta", "en_juego": "oro",
     "finalizado": "neutro", "cancelado": "error", "borrador": "neutro",
 }
+
+
+def _recortar(texto: str, maximo: int) -> str:
+    """Recorta en palabra completa, sin pasar de `maximo` caracteres."""
+    texto = " ".join(texto.split())
+    if len(texto) <= maximo:
+        return texto
+    return texto[:maximo].rsplit(" ", 1)[0].rstrip(" ,.;:·-")
 
 
 def _torneos_publicos():
@@ -42,27 +50,33 @@ def _clases_publicas():
     return clases
 
 
+def _promociones_vigentes():
+    """Hasta 3 promociones activas y vigentes hoy; lista vacía si el club no ha publicado ninguna."""
+    return list(Promocion.objects.vigentes()[:3])
+
+
 def inicio(request):
     aj = Ajustes.actual()
     torneos = [t for t in _torneos_publicos() if t.estado in ESTADOS_TORNEO_VISIBLES][:2]
     return render(request, "club/inicio.html", {
         "ajustes": aj,
         "titulo_hero": aj.texto_hero or "El billar se vive en Guayabal",
-        "subtitulo_hero": aj.subtitulo_hero or "Precisión, estrategia y pasión por cada partida. Descubre una nueva forma de vivir el billar en Medellín.",
+        "subtitulo_hero": aj.subtitulo_hero or "Carambola a tres bandas y pool en Guayabal, Medellín. Reserva tu mesa en línea en menos de dos minutos.",
         "clases": _clases_publicas()[:3],
+        "promociones": _promociones_vigentes(),
         "torneos": torneos,
         "fotos_inicio": negocio.FOTOS_INICIO,
         "jugador": negocio.JUGADOR_ESTUDIO,
         "video": negocio.VIDEO_EVENTO,
-        "seo_titulo_absoluto": "Club de Billares Guayabal · Billar en Medellín",
-        "seo_descripcion": "Billares en Medellín: carambola a tres bandas y pool en Guayabal. Reserva tu mesa de billar en línea, clases, torneos y eventos.",
+        "seo_titulo_absoluto": "Billares en Medellín · Club de Billares Guayabal",
+        "seo_descripcion": "Club de billar en Guayabal, Medellín: carambola a tres bandas y pool. Reserva tu mesa en línea y conoce la escuela, torneos y eventos.",
     })
 
 
 def club(request):
     return render(request, "club/club.html", {
-        "seo_titulo": "Nuestro club de billar en Guayabal",
-        "seo_descripcion": "Club de Billares Guayabal: un club de billar en Medellín para jugar carambola a tres bandas y pool, competir, aprender y compartir.",
+        "seo_titulo_absoluto": "El club · Billar en Guayabal, Medellín",
+        "seo_descripcion": "Conoce el Club de Billares Guayabal: mesas de carambola a tres bandas y pool, ambiente para jugar, aprender y competir en Medellín.",
     })
 
 
@@ -73,6 +87,7 @@ def reservas(request):
     modalidad = request.GET.get("modalidad")
     return render(request, "club/reservas.html", {
         "ajustes": aj,
+        "promociones": _promociones_vigentes(),
         "config_reserva": {
             "modalidadInicial": modalidad if modalidad in Modalidad.values else None,
             "duraciones": [{"min": d, "texto": etiqueta_duracion(d)} for d in aj.duraciones],
@@ -82,8 +97,8 @@ def reservas(request):
             "whatsapp": negocio.enlace_whatsapp("reservas"),
             "telefono": negocio.TELEFONO_E164,
         },
-        "seo_titulo": "Reservar mesa de billar en Medellín",
-        "seo_descripcion": "Reserva tu mesa de carambola a tres bandas o pool en el Club de Billares Guayabal, Medellín. Consulta disponibilidad en tiempo real y recibe tu código.",
+        "seo_titulo_absoluto": "Reservar mesa de billar en Medellín | Guayabal",
+        "seo_descripcion": "Reserva tu mesa de carambola o pool en el Club de Billares Guayabal. Mira la disponibilidad, escoge hora y recibe tu código.",
     })
 
 
@@ -101,8 +116,8 @@ def escuela(request):
     calendario = sorted(((s, c) for c in clases for s in c.proximas), key=lambda x: x[0].inicio)[:10]
     return render(request, "club/escuela.html", {
         "clases": clases, "calendario": calendario, "hay_propuestas": any(not c.confirmada for c in clases),
-        "seo_titulo": "Clases de billar en Medellín · Escuela",
-        "seo_descripcion": "Escuela de billar en Guayabal, Medellín: iniciación, carambola a tres bandas, pool para principiantes, técnica y clases particulares.",
+        "seo_titulo_absoluto": "Clases de billar en Medellín · Escuela Guayabal",
+        "seo_descripcion": "Clases de billar en Medellín: carambola a tres bandas y pool, para principiantes y jugadores avanzados. Pre-inscríbete en línea.",
     })
 
 
@@ -111,8 +126,8 @@ def torneos(request):
     return render(request, "club/torneos.html", {
         "activos": [t for t in todos if t.estado in ESTADOS_TORNEO_VISIBLES],
         "pasados": [t for t in todos if t.estado == Torneo.Estado.FINALIZADO],
-        "seo_titulo": "Torneos y campeonatos de billar en Medellín",
-        "seo_descripcion": "Torneos de carambola a tres bandas y pool en el Club de Billares Guayabal, Medellín. Fechas, formato, cupos e inscripción en línea.",
+        "seo_titulo_absoluto": "Torneos de billar en Medellín · Guayabal",
+        "seo_descripcion": "Torneos de carambola a tres bandas y pool en el Club de Billares Guayabal: fechas, formato, cupos e inscripción en línea.",
     })
 
 
@@ -133,7 +148,8 @@ def torneo_detalle(request, slug):
         "cuadro": [{"nombre": nombre_ronda(r), "partidos": [p for p in partidos if p.ronda == r]} for r in rondas],
         "confirmados": t.inscripciones.filter(estado="confirmada"),
         "abierto": t.estado == Torneo.Estado.ABIERTO and t.libres > 0,
-        "seo_titulo": t.nombre, "seo_descripcion": f"{t.formato}. {t.descripcion}"[:160],
+        "seo_titulo_absoluto": _recortar(f"{t.nombre} · Torneo de billar en Medellín", 60),
+        "seo_descripcion": _recortar(f"{t.formato}. {t.descripcion}", 155),
     })
 
 
@@ -143,8 +159,8 @@ def eventos(request):
         "tipos": SolicitudEvento.Tipo.choices,
         "manana": (hoy_bogota() + timedelta(days=1)).isoformat(),
         "video": negocio.VIDEO_EVENTO,
-        "seo_titulo": "Eventos privados y empresariales con billar en Medellín",
-        "seo_descripcion": "Solicita eventos privados, encuentros empresariales, celebraciones y jornadas recreativas en el Club de Billares Guayabal, Medellín.",
+        "seo_titulo_absoluto": "Eventos con billar en Medellín · Empresas y fiestas",
+        "seo_descripcion": "Eventos empresariales, cumpleaños y celebraciones con billar en Guayabal, Medellín. Cuéntanos tu plan y te respondemos con propuesta.",
     })
 
 
@@ -153,8 +169,8 @@ def galeria(request):
     categorias = [(c, n, sum(1 for f in fotos if f.categoria == c)) for c, n in FotoGaleria.Categoria.choices]
     return render(request, "club/galeria.html", {
         "fotos": fotos, "categorias": [c for c in categorias if c[2] > 0],
-        "seo_titulo": "Galería",
-        "seo_descripcion": "Galería del Club de Billares Guayabal en Medellín: mesas de carambola, el salón y el ambiente del club.",
+        "seo_titulo_absoluto": "Galería · Club de Billares Guayabal, Medellín",
+        "seo_descripcion": "Fotos del Club de Billares Guayabal en Medellín: el salón, las mesas de carambola, la barra y el ambiente de las noches de juego.",
     })
 
 
@@ -162,13 +178,13 @@ def galeria(request):
 def contacto(request):
     return render(request, "club/contacto.html", {
         "asuntos": [("reservas", "Reservas"), ("clases", "Clases"), ("torneos", "Torneos"), ("eventos", "Eventos")],
-        "seo_titulo": "Contacto y ubicación",
-        "seo_descripcion": "Ubicación, teléfono, WhatsApp y cómo llegar al Club de Billares Guayabal en Guayabal, Medellín.",
+        "seo_titulo_absoluto": "Contacto y cómo llegar · Billares Guayabal",
+        "seo_descripcion": "Escríbenos por WhatsApp o déjanos un mensaje. Ubicación, mapa y cómo llegar al Club de Billares Guayabal, en Medellín.",
     })
 
 
 def privacidad(request):
-    return render(request, "club/privacidad.html", {"seo_titulo": "Tratamiento de datos personales",
+    return render(request, "club/privacidad.html", {"seo_titulo_absoluto": "Tratamiento de datos personales · Billares Guayabal",
                                                      "seo_descripcion": "Política de tratamiento de datos personales del Club de Billares Guayabal."})
 
 

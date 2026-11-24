@@ -3,25 +3,25 @@
 @source "../club/static/club/js";
 
 @theme {
-  --color-carbon: #111714;
-  --color-carbon-2: #18201c;
-  --color-carbon-3: #222c27;
-  --color-verde: #164b37;
-  --color-verde-2: #1d5e45;
-  --color-verde-oscuro: #0e3426;
-  --color-oro: #c5a36a;
-  --color-oro-claro: #d9bf8e;
-  --color-oro-oscuro: #9e7f48;
-  --color-marfil: #f2ebdd;
-  --color-marfil-2: #e8dfcd;
-  --color-humo: #a7a99f;
+  --color-carbon: #0a1b34;
+  --color-carbon-2: #11284a;
+  --color-carbon-3: #1b3a66;
+  --color-verde: #0b6b4b;
+  --color-verde-2: #128259;
+  --color-verde-oscuro: #07503a;
+  --color-oro: #f2c230;
+  --color-oro-claro: #f8d65c;
+  --color-oro-oscuro: #b3261b;
+  --color-marfil: #f3f5f0;
+  --color-marfil-2: #e2e8e0;
+  --color-humo: #9fb0c3;
 
   --color-ok: #4f9a74;
   --color-alerta: #d4a24c;
   --color-error: #c46a5a;
 
-  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
-  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", system-ui, sans-serif;
 
   --ease-club: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-fade-up: fade-up 0.9s var(--ease-club) both;
@@ -41,8 +41,7 @@
     background: var(--color-carbon);
     color: var(--color-marfil);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
-    -webkit-font-smoothing: antialiased;
+      -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
   ::selection {
@@ -56,19 +55,11 @@
   }
   h1, h2, h3 {
     font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    letter-spacing: -0.035em;
     text-wrap: balance;
   }
-  /* Párrafos justificados. La división silábica (con lang="es-CO") evita espacios
-     grandes entre palabras en columnas angostas del celular. */
-  p {
-    text-align: justify;
-    -webkit-hyphens: auto;
-    hyphens: auto;
-  }
-  /* Los bloques centrados (avisos, llamados a la acción) siguen centrados. */
-  :where(.text-center) p { text-align: center; }
+  p { text-wrap: pretty; }
   input, select, textarea, button { font: inherit; }
 }
 
@@ -76,23 +67,37 @@
   /* Etiqueta de sección: pequeña, espaciada, dorada */
   .eyebrow {
     font-family: var(--font-sans);
-    font-size: 0.72rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
     color: var(--color-oro);
     display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
   }
   .eyebrow::before {
     content: "";
-    width: 2rem;
-    height: 1px;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 999px;
     background: currentColor;
-    opacity: 0.7;
+    box-shadow: 0.9rem 0 0 -0.12rem currentColor;
+    margin-right: 0.9rem;
+    flex: none;
   }
   .claro .eyebrow { color: var(--color-oro-oscuro); }
+
+  /* Marcador de carambola: fila de bolitas en un alambre. Separador de secciones. */
+  .marcador {
+    --b1: var(--color-oro);
+    --b2: var(--color-marfil);
+    position: relative;
+    height: 1.25rem;
+    background:
+      radial-gradient(circle at 0.625rem 0.625rem, var(--b1) 0.5rem, transparent calc(0.5rem + 1px)) 0 0 / 3.5rem 1.25rem repeat-x,
+      radial-gradient(circle at 2.375rem 0.625rem, var(--b2) 0.5rem, transparent calc(0.5rem + 1px)) 0 0 / 3.5rem 1.25rem repeat-x;
+  }
+  .claro .marcador { --b1: var(--color-oro-oscuro); --b2: var(--color-carbon); }
+  .marcador-entra { animation: marcador-entra 1.4s var(--ease-club) .6s both; }
 
   /* Textura sutil de paño para secciones verdes */
   .textura-verde {
@@ -112,26 +117,26 @@
     width: 100%;
     min-height: 3rem;
     border-radius: 0.375rem;
-    border: 1px solid rgb(242 235 221 / 0.18);
-    background: rgb(242 235 221 / 0.04);
+    border: 1px solid rgb(243 245 240 / 0.18);
+    background: rgb(243 245 240 / 0.04);
     padding: 0.75rem 1rem;
     color: var(--color-marfil);
     font-size: 1rem;
     transition: border-color 0.2s, background-color 0.2s;
   }
-  .campo::placeholder { color: rgb(242 235 221 / 0.4); }
-  .campo:hover { border-color: rgb(242 235 221 / 0.3); }
-  .campo:focus { outline: none; border-color: var(--color-oro); background: rgb(242 235 221 / 0.07); }
+  .campo::placeholder { color: rgb(243 245 240 / 0.55); }
+  .campo:hover { border-color: rgb(243 245 240 / 0.3); }
+  .campo:focus { outline: 2px solid var(--color-oro); outline-offset: 2px; border-color: var(--color-oro); background: rgb(243 245 240 / 0.07); }
   .campo[aria-invalid="true"] { border-color: var(--color-error); }
   select.campo option { background: var(--color-carbon-2); color: var(--color-marfil); }
 
   .claro .campo {
-    border-color: rgb(17 23 20 / 0.18);
-    background: #fffdf8;
+    border-color: rgb(10 27 52 / 0.18);
+    background: #fcfdfb;
     color: var(--color-carbon);
   }
-  .claro .campo::placeholder { color: rgb(17 23 20 / 0.4); }
-  .claro .campo:focus { border-color: var(--color-verde); }
+  .claro .campo::placeholder { color: rgb(10 27 52 / 0.58); }
+  .claro .campo:focus { outline-color: var(--color-carbon); border-color: var(--color-verde); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -158,10 +163,12 @@
   #menu-movil.abierto .item { opacity: 1; transform: none; }
   .oculto { display: none !important; }
 }
+@keyframes marcador-entra { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
 @keyframes hero-zoom { from { transform: scale(1.12); } to { transform: scale(1); } }
 @keyframes palabra-sube { from { transform: translateY(105%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   .revelar { opacity: 1; transform: none; }
+  .marcador-entra { animation: none; }
   #menu-movil { transition: none; }
 }
 
@@ -173,20 +180,20 @@
   .tono-carbon2 { @apply bg-carbon-2 text-marfil; }
   .tono-claro { @apply bg-marfil text-carbon; }
   .tono-verde { @apply text-marfil; }
-  .titulo-seccion { @apply text-4xl leading-[1.02] sm:text-5xl lg:text-6xl; }
-  .texto-seccion { @apply mt-6 text-justify text-base leading-relaxed opacity-75 sm:text-lg; hyphens: auto; }
+  .titulo-seccion { @apply text-4xl leading-[1] sm:text-5xl lg:text-6xl; }
+  .texto-seccion { @apply mt-6 max-w-[60ch] text-base leading-relaxed opacity-80 sm:text-lg; }
 
-  .btn { @apply relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold uppercase tracking-[0.08em] transition-all duration-300 select-none disabled:pointer-events-none disabled:opacity-50; }
-  .btn-sm { @apply h-10 px-5 text-[0.7rem]; }
-  .btn-md { @apply h-12 px-7 text-[0.74rem]; }
-  .btn-lg { @apply h-14 px-9 text-[0.78rem]; }
-  .btn-oro { @apply bg-oro text-carbon shadow-[0_10px_30px_-12px_rgb(197_163_106/0.6)] hover:-translate-y-0.5 hover:bg-oro-claro; }
+  .btn { @apply relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-bold tracking-[-0.005em] transition-[transform,background-color,border-color,color,box-shadow] duration-300 select-none disabled:pointer-events-none disabled:opacity-50; }
+  .btn-sm { @apply h-11 px-5 text-sm; }
+  .btn-md { @apply h-12 px-7 text-[0.95rem]; }
+  .btn-lg { @apply h-14 px-9 text-base; }
+  .btn-oro { @apply bg-oro text-carbon shadow-[0_10px_30px_-12px_rgb(242_194_48/0.55)] hover:-translate-y-0.5 hover:bg-oro-claro; }
   .btn-contorno { @apply border border-marfil/35 text-marfil hover:border-oro hover:text-oro; }
   .btn-fantasma { @apply text-marfil/80 hover:text-oro; }
   .btn-verde { @apply bg-verde text-marfil hover:-translate-y-0.5 hover:bg-verde-2; }
   .btn-oscuro { @apply bg-carbon text-marfil hover:-translate-y-0.5 hover:bg-carbon-3; }
 
-  .insignia { @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em]; }
+  .insignia { @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold; }
   .insignia-oro { @apply border-oro/40 bg-oro/10 text-oro; }
   .insignia-ok { @apply border-ok/40 bg-ok/10 text-[#7cc39d]; }
   .insignia-alerta { @apply border-alerta/40 bg-alerta/10 text-alerta; }
@@ -195,8 +202,39 @@
   .insignia-verde { @apply border-verde/30 bg-verde/10 text-verde; }
 
   .aviso { @apply flex gap-3 rounded-lg border border-oro/30 bg-oro/[0.07] px-4 py-3 text-sm leading-relaxed; }
-  .etiqueta-campo { @apply mb-2 block text-[0.7rem] font-semibold uppercase tracking-[0.16em] opacity-70; }
+  .etiqueta-campo { @apply mb-2 block text-sm font-semibold opacity-80; }
   .error-campo { @apply mt-1.5 text-sm text-[#e09080]; }
   .tono-claro .error-campo { @apply text-error; }
-  .foto-ref { @apply pointer-events-none absolute bottom-2 right-2 rounded-full bg-carbon/70 px-2.5 py-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-marfil/70 backdrop-blur; }
+  .foto-ref { @apply pointer-events-none absolute bottom-2 right-2 rounded-full bg-carbon/70 px-2.5 py-1 text-xs font-medium text-marfil/90 backdrop-blur; }
+}
+
+/* ---------- Segunda pasada de diseño: navegación, filtros, confianza, accesibilidad ---------- */
+@layer base {
+  /* sobre fondos claros el anillo de foco amarillo no se ve: se usa azul paño */
+  .claro :focus-visible, .tono-claro :focus-visible { outline-color: var(--color-carbon); }
+}
+@layer components {
+  .enlace-nav { @apply relative inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-sm font-semibold transition-colors duration-200; }
+  .enlace-nav[aria-current="page"]::after { content: ""; position: absolute; left: 0.75rem; right: 0.75rem; bottom: 0.4rem; height: 2px; border-radius: 2px; background: currentColor; }
+  .enlace-pie { @apply flex min-h-11 items-center gap-3 py-2 transition-colors duration-200 hover:text-oro; }
+
+  /* Filtros de la galería: botones con aria-pressed (el estilo sale del atributo) */
+  .filtro { @apply inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-marfil/25 px-5 text-sm font-semibold text-marfil/85 transition-[background-color,border-color,color] duration-200 hover:border-oro hover:text-oro; }
+  .filtro[aria-pressed="true"] { @apply border-oro bg-oro text-carbon hover:text-carbon; }
+
+  /* Barra de datos del club (solo hechos del sitio) */
+  .dato-confianza { @apply flex items-start gap-3 py-3 text-sm leading-snug; }
+  .dato-confianza svg { @apply mt-0.5 h-5 w-5 shrink-0 text-oro; }
+  .dato-confianza b { @apply block font-semibold text-marfil; }
+  .dato-confianza dd span { @apply text-marfil/80; }
+
+  /* Controles táctiles de enlaces de texto */
+  .enlace-texto { @apply inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-oro transition-colors duration-200 hover:text-oro-claro; }
+  .claro .enlace-texto { @apply text-oro-oscuro hover:text-carbon; }
+
+  .btn-whatsapp { @apply bg-[#157a47] text-white hover:-translate-y-0.5 hover:bg-[#1a8f55]; }
+}
+/* Sin JavaScript no hay observador que revele las secciones */
+@media (scripting: none) {
+  .revelar { opacity: 1; transform: none; }
 }

@@ -1,26 +1,26 @@
 {% extends "club/base.html" %}
 {% block contenido %}
-{% include "club/parciales/encabezado_pagina.html" with eyebrow="Mi reserva" titulo='Consulta tu <em class="text-oro">reserva.</em>' texto="Por tu privacidad, pedimos el código y el celular con el que hiciste la solicitud." %}
+{% include "club/parciales/encabezado_pagina.html" with eyebrow="Mi reserva" titulo='Consulta tu reserva.' texto="Por tu privacidad, pedimos el código y el celular con el que hiciste la solicitud." %}
 <section class="seccion tono-oscuro !pt-4">
   <div class="contenedor grid gap-10 lg:grid-cols-2">
     <form id="form-consulta" novalidate class="space-y-6">
-      <div><label class="etiqueta-campo" for="codigo">Código de reserva</label><input id="codigo" name="codigo" placeholder="BG-XXXXXX" autocapitalize="characters" class="campo font-mono uppercase tracking-[0.14em]"><p data-error="codigo" class="error-campo oculto"></p></div>
+      <div><label class="etiqueta-campo" for="codigo">Código de reserva</label><input id="codigo" name="codigo" placeholder="BG-XXXXXX" autocapitalize="characters" class="campo font-mono"><p data-error="codigo" class="error-campo oculto"></p></div>
       <div><label class="etiqueta-campo" for="celular">Celular con el que reservaste</label><input id="celular" name="celular" type="tel" inputmode="numeric" class="campo"><p data-error="celular" class="error-campo oculto"></p></div>
       <button type="submit" class="btn btn-lg btn-oro w-full sm:w-auto">Consultar</button>
       <p id="consulta-error" role="alert" class="oculto rounded-xl border border-error/40 bg-error/10 p-4 text-sm"></p>
     </form>
     <div aria-live="polite">
-      <div id="consulta-vacio" class="flex h-full min-h-60 items-center justify-center rounded-3xl border border-dashed border-marfil/15 p-8 text-center text-sm text-marfil/50">Ingresa tu código y celular para ver el estado de tu reserva.</div>
+      <div id="consulta-vacio" class="flex h-full min-h-60 items-center justify-center rounded-3xl border border-dashed border-marfil/15 p-8 text-center text-sm text-marfil/75">Ingresa tu código y celular para ver el estado de tu reserva.</div>
       <div id="consulta-resultado" class="oculto rounded-3xl border border-oro/30 bg-carbon-2 p-8">
         <div class="flex flex-wrap items-center justify-between gap-3"><p id="cr-codigo" class="font-mono text-2xl tracking-[0.14em] text-oro"></p><span id="cr-estado" class="insignia"></span></div>
         <p id="cr-hola" class="mt-6 font-display text-3xl"></p>
         <dl class="mt-6 space-y-3 text-sm">
-          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Fecha</dt><dd id="cr-fecha" class="text-right first-letter:uppercase"></dd></div>
-          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Horario</dt><dd id="cr-horario"></dd></div>
-          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Mesa</dt><dd id="cr-mesa"></dd></div>
-          <div class="flex justify-between gap-4"><dt class="text-marfil/50">Valor estimado</dt><dd id="cr-valor"></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/75">Fecha</dt><dd id="cr-fecha" class="text-right "></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/75">Horario</dt><dd id="cr-horario"></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/75">Mesa</dt><dd id="cr-mesa"></dd></div>
+          <div class="flex justify-between gap-4"><dt class="text-marfil/75">Valor estimado</dt><dd id="cr-valor"></dd></div>
         </dl>
-        <a id="cr-whatsapp" href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" class="mt-8 inline-flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-oro">Cambiar o cancelar por WhatsApp</a>
+        <a id="cr-whatsapp" href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" class="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-oro">Cambiar o cancelar por WhatsApp</a>
       </div>
     </div>
   </div>

@@ -7,9 +7,11 @@ services:
     plan: free
     region: oregon
     buildCommand: bash build.sh
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 60 --access-logfile -
     healthCheckPath: /robots.txt
     envVars:
+      - key: CSP_PERMITIR_GOOGLE_FONTS
+        value: "0"                   # las fuentes ya se sirven desde el propio sitio
       - key: DJANGO_DEBUG
         value: "0"
       - key: DJANGO_SECRET_KEY

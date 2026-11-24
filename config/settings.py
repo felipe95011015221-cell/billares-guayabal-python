@@ -12,6 +12,7 @@ Variables de entorno (ver .env.example):
 En Vercel la variable VERCEL=1 existe automáticamente y activa los ajustes para funciones sin servidor.
 """
 import os
+import sys
 from pathlib import Path
 
 import dj_database_url
@@ -41,7 +42,7 @@ if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):  # Render lo define automáticame
 for _var in ("VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_URL", "VERCEL_BRANCH_URL"):  # Vercel las define solo
     if os.environ.get(_var):
         ALLOWED_HOSTS.append(os.environ[_var])
-CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h not in {"localhost", "127.0.0.1"}]
+CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS if h not in {"localhost", "127.0.0.1"} and not h.startswith((".", "*"))]
 
 SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000").rstrip("/")
 GA_ID = os.environ.get("GA_ID", "")
@@ -59,7 +60,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "club.middleware.CompresionTextoMiddleware",  # gzip de HTML/JSON (los estáticos los comprime WhiteNoise)
     "django.middleware.security.SecurityMiddleware",
+    "club.middleware.CabecerasSeguridadMiddleware",  # CSP y Permissions-Policy (también en archivos estáticos)
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -129,9 +132,13 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if not (DEBUG or EN_VERCEL)
                     else "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+if "test" in sys.argv[1:2]:  # las pruebas no necesitan collectstatic ni el manifiesto con hash
+    STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+# Cuerpos de petición (JSON/formularios; no cuenta archivos del panel): las APIs reciben unos pocos KB.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024  # por encima, el archivo se escribe a disco temporal
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "admin:login"
@@ -140,14 +147,27 @@ LOGIN_URL = "admin:login"
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
+    SECURE_REDIRECT_EXEMPT = [r"^robots\.txt$"]  # el health check de Render puede llegar por HTTP interno
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+    # HSTS: 1 año. includeSubDomains y preload SOLO con dominio propio (en *.onrender.com no se pueden
+    # precargar y afectarían a subdominios ajenos). Actívelos con DJANGO_HSTS_SUBDOMINIOS=1 / DJANGO_HSTS_PRELOAD=1.
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", 60 * 60 * 24 * 365))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool("DJANGO_HSTS_SUBDOMINIOS", False)
+    SECURE_HSTS_PRELOAD = _env_bool("DJANGO_HSTS_PRELOAD", False)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+# CSRF_COOKIE_HTTPONLY debe seguir en False: sitio.js lee la cookie «csrftoken» para el encabezado X-CSRFToken.
 SESSION_COOKIE_AGE = 8 * 60 * 60
+
+# Content-Security-Policy (club/middleware.py). Poner en 0 cuando head.html ya no cargue Google Fonts.
+CSP_PERMITIR_GOOGLE_FONTS = _env_bool("CSP_PERMITIR_GOOGLE_FONTS", True)
+CSP_SOLO_REPORTAR = _env_bool("CSP_SOLO_REPORTAR", False)  # "1": solo reporta en consola, no bloquea
 
 # Con PostgreSQL la caché (límite de envíos por IP) vive en la base, compartida entre instancias.
 # La tabla se crea con «manage.py createcachetable» al desplegar.
@@ -155,7 +175,6 @@ if URL_BD:
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "club_cache"}}
 else:
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
