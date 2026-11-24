@@ -18,6 +18,9 @@ from .models import (Ajustes, Clase, FotoGaleria, InscripcionClase, InscripcionT
 
 
 class PromocionesTests(TestCase):
+    def setUp(self):
+        Promocion.objects.all().delete()  # la migración 0004 deja la promoción real del club; estas pruebas parten de cero
+
     def test_vigencia_texto(self):
         self.assertEqual(Promocion().vigencia_texto, "")
         self.assertEqual(Promocion(vigencia_desde=date(2026, 12, 1), vigencia_hasta=date(2026, 12, 24)).vigencia_texto,
@@ -245,3 +248,42 @@ class JsReservasTests(TestCase):
         self.assertIn('typeof window.evento === "function"', js)
         self.assertNotIn("transition-all", js)
         self.assertNotIn("uppercase", js)
+
+
+class MigracionDatosConfirmadosTests(TestCase):
+    """La migración 0004 carga la tarifa y la promoción confirmadas, una vez y sin pisar ediciones."""
+
+    def _migrar(self):
+        import importlib
+
+        from django.apps import apps
+
+        importlib.import_module("club.migrations.0004_tarifa_y_promocion_confirmadas").cargar(apps, None)
+
+    def test_asigna_tarifa_solo_a_mesas_sin_tarifa(self):
+        from .models import Mesa
+
+        sin = Mesa.objects.create(nombre="A", modalidad="carambola")
+        con = Mesa.objects.create(nombre="B", modalidad="pool", tarifa_hora=20000)
+        self._migrar()
+        sin.refresh_from_db(); con.refresh_from_db()
+        self.assertEqual(sin.tarifa_hora, 15000)
+        self.assertEqual(con.tarifa_hora, 20000)  # lo editado en el panel no se pisa
+
+    def test_promocion_unica_y_visible_en_inicio(self):
+        Promocion.objects.all().delete()
+        self._migrar(); self._migrar()
+        self.assertEqual(Promocion.objects.count(), 1)
+        p = Promocion.objects.get()
+        self.assertTrue(p.activa)
+        self.assertIn("7.500", p.titulo)
+        self.assertEqual(p.descripcion, "Antes de las 3 p. m., de lunes a viernes.")
+        html = self.client.get("/").content.decode()
+        self.assertIn("7.500", html)
+        self.assertIn("lunes a viernes", html)
+
+    def test_escuela_dirige_a_whatsapp(self):
+        html = self.client.get("/escuela/").content.decode()
+        self.assertIn("escríbenos por WhatsApp", html)
+        self.assertNotIn("propuesta inicial", html)
+        self.assertNotIn("por confirmar", html.lower().split("<footer")[0].replace("horario por confirmar", ""))
