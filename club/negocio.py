@@ -55,6 +55,20 @@ def datos_pendientes():
     return [{"campo": c, "valor": d.valor or "—", "estado": d.estado} for c, d in campos if d.por_confirmar]
 
 
+# ---------- Sala interactiva de reservas (calculadora de valor) ----------
+# Horario en minutos desde la medianoche. El cierre pasa de medianoche: 26 * 60 = 2:00 a. m. del día siguiente.
+HORARIO_APERTURA_MIN = 9 * 60
+HORARIO_CIERRE_MIN = 26 * 60
+# Promoción por hora (confirmada por el propietario, 24 nov. 2026): cualquier mesa a $ 8.000 hasta las 3:00 p. m.
+# La calculadora solo la aplica mientras haya en el panel una promoción vigente cuyo título incluya «8.000»:
+# si el club la desactiva o la cambia, la web vuelve a calcular con la tarifa normal de cada mesa.
+PROMO_HORA_VALOR = 8000
+PROMO_HORA_HASTA_MIN = 15 * 60
+# Duraciones que se pueden pedir (minutos) y días hacia adelante para elegir fecha.
+SALA_DURACIONES = (60, 90, 120, 150, 180, 240)
+SALA_DIAS_MAX = 60
+SALA_MENSAJE = "Hola, Club de Billares Guayabal. Los escribo desde su página web: quisiera reservar una mesa."
+
 # ---------- WhatsApp, llamadas y mapas ----------
 MENSAJES_WHATSAPP = {
     "general": "Hola, Club de Billares Guayabal. Los escribo desde su página web y quisiera más información sobre el club.",

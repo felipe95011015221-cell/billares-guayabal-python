@@ -1,4 +1,5 @@
 """Vistas de las páginas públicas."""
+import re
 from datetime import timedelta
 
 from django.conf import settings
@@ -104,9 +105,44 @@ def _mesas_por_modalidad():
     return grupos
 
 
+def _numero_mesa(mesa, respaldo: int) -> int:
+    digitos = re.search(r"\d+", mesa.nombre or "")
+    return int(digitos.group()) if digitos else respaldo
+
+
+def _datos_sala(grupos):
+    """Datos para la sala interactiva (JSON): mesas, horario, promoción y WhatsApp.
+
+    No incluye ocupación: hoy no hay reservas en línea, así que la web no inventa estados.
+    Cuando exista disponibilidad en tiempo real se agrega aquí (ver club/static/club/js/sala/disponibilidad.js).
+    """
+    mesas = []
+    for g in grupos:
+        for mesa in g["mesas"]:
+            mesas.append({
+                "id": mesa.id, "nombre": mesa.nombre, "numero": _numero_mesa(mesa, len(mesas) + 1),
+                "modalidad": g["clave"], "modalidadNombre": g["nombre"],
+                "tarifa": int(mesa.tarifa_hora) if mesa.tarifa_hora else None,
+            })
+    valor_promo = f"{negocio.PROMO_HORA_VALOR:,}".replace(",", ".")
+    hay_promo = Promocion.objects.vigentes().filter(titulo__contains=valor_promo).exists()
+    ahora = timezone.localtime()
+    return {
+        "mesas": mesas,
+        "promo": {"valorHora": negocio.PROMO_HORA_VALOR, "hastaMin": negocio.PROMO_HORA_HASTA_MIN} if hay_promo else None,
+        "aperturaMin": negocio.HORARIO_APERTURA_MIN, "cierreMin": negocio.HORARIO_CIERRE_MIN,
+        "duraciones": list(negocio.SALA_DURACIONES), "diasMax": negocio.SALA_DIAS_MAX,
+        "hoy": hoy_bogota().isoformat(), "ahoraMin": ahora.hour * 60 + ahora.minute,
+        "telefono": negocio.TELEFONO_E164, "mensaje": negocio.SALA_MENSAJE,
+    }
+
+
 def _reservas_por_whatsapp(request):
+    modalidades = _mesas_por_modalidad()
     return render(request, "club/reservas_whatsapp.html", {
-        "modalidades": _mesas_por_modalidad(),
+        "modalidades": modalidades,
+        "sala": _datos_sala(modalidades),
+        "wa_reservas": negocio.enlace_whatsapp("reservas"),
         "promociones": list(Promocion.objects.vigentes()[:3]),
         "seo_titulo_absoluto": "Reservar mesa de billar en Medellín | Guayabal",
         "seo_descripcion": "Reserva tu mesa de carambola o pool en el Club de Billares Guayabal por WhatsApp. Mira las mesas, la tarifa por hora y las promociones.",

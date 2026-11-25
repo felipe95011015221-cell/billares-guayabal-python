@@ -565,9 +565,10 @@ class SoloWhatsAppTests(TestCase):
         self.assertIn("Mesa 1", html)
         self.assertIn("https://wa.me/573147730533?text=", html)
         self.assertNotIn('id="form-reserva"', html)
-        self.assertEqual(html.count("<svg viewBox=\"0 0 240 130\""), 2)  # un dibujo por mesa (2 mesas creadas)
+        self.assertEqual(html.count('class="sala-ficha" data-mesa='), 2)  # una mesa seleccionable por mesa creada
 
     def test_cada_mesa_tiene_su_boton_reservar_con_su_nombre(self):
+        """Sin JavaScript (noscript) cada mesa conserva su enlace de WhatsApp con su nombre en el mensaje."""
         import re
         from urllib.parse import unquote
 
@@ -575,10 +576,52 @@ class SoloWhatsAppTests(TestCase):
             Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, tarifa_hora=15000, orden=i)
         html = self.client.get("/reservas/").content.decode()
         botones = re.findall(r'<a href="(https://wa\.me/[^"]+)"[^>]*aria-label="Reservar (Mesa \d) por WhatsApp"[^>]*>', html)
-        self.assertEqual(len(botones), 7)  # un «Reservar» por mesa, debajo de su dibujo
+        self.assertEqual(len(botones), 7)
         for url, nombre in botones:
             self.assertIn(f"Mesa: {nombre}", unquote(url))  # el mensaje dice qué mesa se quiere
-        self.assertEqual(html.count('<svg viewBox="0 0 240 130"'), 7)
+
+    def test_sala_interactiva_con_las_siete_mesas_y_sus_datos(self):
+        import re
+
+        for i, mod in enumerate(["carambola"] * 5 + ["pool"] * 2, 1):
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, tarifa_hora=15000, orden=i)
+        r = self.client.get("/reservas/")
+        html = r.content.decode()
+        sala = r.context["sala"]
+        self.assertEqual([m["numero"] for m in sala["mesas"]], [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual([m["modalidad"] for m in sala["mesas"]], ["carambola"] * 5 + ["pool"] * 2)
+        self.assertTrue(all(m["tarifa"] == 15000 for m in sala["mesas"]))
+        self.assertEqual(sala["telefono"], "573147730533")
+        self.assertEqual((sala["aperturaMin"], sala["cierreMin"]), (9 * 60, 26 * 60))
+        self.assertIn('id="sala-datos"', html)  # datos para la escena 3D
+        self.assertIn("club/js/sala/principal.js", html)
+        self.assertEqual(len(re.findall(r'class="sala-ficha" data-mesa="\d+"', html)), 7)
+        for campo in ("sala-mesa", "sala-fecha", "sala-hora", "sala-duracion", "sala-jugadores", "sala-nombre"):
+            self.assertIn(f'id="{campo}"', html)
+        self.assertIn("sujeta a confirmación por WhatsApp", html)
+        self.assertNotIn("mesa_grafica", html)
+        self.assertNotIn('<svg viewBox="0 0 240 130"', html)  # ya no hay ilustraciones planas de mesas
+
+    def test_promocion_en_la_calculadora_solo_si_esta_vigente_en_el_panel(self):
+        from .models import Promocion
+
+        Mesa.objects.create(nombre="Mesa 1", modalidad="carambola", tarifa_hora=15000, orden=1)
+        Promocion.objects.all().delete()
+        self.assertIsNone(self.client.get("/reservas/").context["sala"]["promo"])
+        Promocion.objects.create(titulo="La hora de billar en cualquier mesa, a $ 8.000")
+        self.assertEqual(self.client.get("/reservas/").context["sala"]["promo"], {"valorHora": 8000, "hastaMin": 900})
+        Promocion.objects.update(activa=False)
+        self.assertIsNone(self.client.get("/reservas/").context["sala"]["promo"])
+
+    def test_archivos_de_la_sala_3d_existen(self):
+        from django.contrib.staticfiles import finders
+
+        for ruta in ("club/js/sala/principal.js", "club/js/sala/escena3d.js", "club/js/sala/plano.js",
+                     "club/js/sala/formulario.js", "club/js/sala/precios.js", "club/js/sala/distribucion.js",
+                     "club/js/sala/texturas.js", "club/js/sala/disponibilidad.js",
+                     "club/vendor/three/three.module.min.js", "club/vendor/three/OrbitControls.js",
+                     "club/vendor/three/RoundedBoxGeometry.js", "club/vendor/three/RoomEnvironment.js"):
+            self.assertIsNotNone(finders.find(ruta), ruta)
 
     def test_consultar_redirige_a_reservas(self):
         r = self.client.get("/reservas/consultar/")
