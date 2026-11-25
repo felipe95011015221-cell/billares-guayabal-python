@@ -1,0 +1,130 @@
+{% load static club_tags %}
+{# Sala interactiva de reservas: escena 3D (Three.js) o plano ligero, más el panel que arma el mensaje de WhatsApp. #}
+{# Recibe: modalidades (mesas por modalidad), sala (datos JSON) y wa_reservas (enlace general de WhatsApp). #}
+<section id="sala" class="sala" aria-labelledby="sala-titulo">
+  <div class="contenedor">
+    <div class="sala-cabecera">
+      <div>
+        <h2 id="sala-titulo" class="titulo-seccion">Elige tu mesa</h2>
+        <p class="mt-5 max-w-[52ch] text-base leading-relaxed text-marfil/80 sm:text-lg">Recorre la sala, acércate a la mesa que te guste y tócala para armar tu reserva. Te la confirmamos por WhatsApp.</p>
+      </div>
+      <ul class="sala-leyenda" aria-label="Mesas y tarifa">
+        {% for m in modalidades %}{% if m.cantidad %}
+        <li><span class="sala-pano sala-pano-{{ m.clave }}" aria-hidden="true"></span><span><b>{{ m.nombre }}</b><br>{% for mesa in m.mesas %}{% if forloop.first %}{{ mesa.nombre }}{% elif forloop.last %} y {{ mesa.nombre|cut:"Mesa "|cut:"mesa " }}{% else %}, {{ mesa.nombre|cut:"Mesa "|cut:"mesa " }}{% endif %}{% endfor %}</span></li>
+        {% endif %}{% endfor %}
+        {% with tarifa=modalidades.0.tarifa %}{% if tarifa %}<li><span class="sala-ficha-precio" aria-hidden="true">$</span><span><b>{{ tarifa|cop }} la hora</b><br>{% if sala.promo %}{{ sala.promo.valorHora|cop }} hasta las 3:00 p. m.{% else %}en todas las mesas{% endif %}</span></li>{% endif %}{% endwith %}
+      </ul>
+    </div>
+
+    <noscript>
+      <ul class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {% for m in modalidades %}{% for mesa in m.mesas %}
+        <li><a href="{{ mesa.wa_url }}" target="_blank" rel="noopener noreferrer" data-evento="cta_reservar" data-evento-origen="mesa_{{ mesa.id }}" aria-label="Reservar {{ mesa.nombre }} por WhatsApp" class="btn btn-md btn-whatsapp w-full">{{ mesa.nombre }} · {{ m.nombre }}</a></li>
+        {% endfor %}{% endfor %}
+      </ul>
+    </noscript>
+
+    <div class="sala-grid" data-sala hidden>
+      <div class="sala-escenario" data-sala-escenario>
+        <div class="sala-lienzo" data-sala-lienzo></div>
+        <div class="sala-plano-marco" data-sala-plano hidden></div>
+        <p class="sala-carga" data-sala-carga role="status">Encendiendo las luces de la sala…</p>
+        <div class="sala-etiqueta" data-sala-etiqueta aria-hidden="true" hidden></div>
+
+        <div class="sala-controles">
+          <div class="sala-vistas" role="group" aria-label="Perspectiva">
+            <button type="button" class="sala-control" data-vista="iso" aria-pressed="true">Sala</button>
+            <button type="button" class="sala-control" data-vista="cenital" aria-pressed="false">Plano</button>
+            <button type="button" class="sala-control" data-vista="ras" aria-pressed="false">A ras de mesa</button>
+          </div>
+          <div class="sala-zoom" role="group" aria-label="Acercamiento">
+            <button type="button" class="sala-control sala-control-icono" data-zoom="1" aria-label="Acercar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+            <button type="button" class="sala-control sala-control-icono" data-zoom="-1" aria-label="Alejar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+            <button type="button" class="sala-control sala-control-icono" data-restablecer aria-label="Ver toda la sala"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+          </div>
+        </div>
+        <p class="sala-ayuda" data-sala-ayuda>Arrastra para girar · pellizca o usa Ctrl + rueda para acercar</p>
+
+        <div class="sala-barra" data-sala-barra hidden>
+          <span class="sala-barra-texto" data-sala-barra-texto></span>
+          <a href="#sala-panel" class="btn btn-sm btn-oro">Reservar esta mesa</a>
+        </div>
+      </div>
+
+      <div class="sala-pie">
+        <div class="sala-fichas" role="group" aria-label="Elegir mesa">
+          {% for m in modalidades %}{% for mesa in m.mesas %}
+          <button type="button" class="sala-ficha" data-mesa="{{ mesa.id }}" aria-pressed="false">
+            <span class="sala-pano sala-pano-{{ m.clave }}" aria-hidden="true"></span>
+            <span><b>{{ mesa.nombre }}</b><small>{% if m.clave == "pool" %}Pool{% else %}Tres bandas{% endif %}</small></span>
+          </button>
+          {% endfor %}{% endfor %}
+        </div>
+        <button type="button" class="sala-modo" data-sala-modo hidden>Usar vista ligera</button>
+      </div>
+
+      <form id="sala-panel" class="sala-panel" data-sala-form novalidate aria-labelledby="sala-panel-titulo">
+        <div class="sala-panel-cabeza">
+          <h3 id="sala-panel-titulo" class="font-display text-[1.65rem] leading-none" data-sala-titulo>Tu reserva</h3>
+          <p class="mt-2 text-sm text-marfil/70" data-sala-subtitulo>Toca una mesa en la sala o elígela aquí.</p>
+        </div>
+
+        <div class="sala-campos">
+          <div class="sala-campo-doble">
+            <div>
+              <label class="etiqueta-campo" for="sala-mesa">Mesa</label>
+              <select id="sala-mesa" class="campo" name="mesa">
+                {% for m in modalidades %}<optgroup label="{{ m.nombre }}">{% for mesa in m.mesas %}<option value="{{ mesa.id }}">{{ mesa.nombre }}</option>{% endfor %}</optgroup>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <span class="etiqueta-campo" id="sala-modalidad-etiqueta">Modalidad</span>
+              <output class="sala-dato" id="sala-modalidad" aria-labelledby="sala-modalidad-etiqueta" data-sala-modalidad>—</output>
+            </div>
+          </div>
+          <div class="sala-campo-doble">
+            <div>
+              <label class="etiqueta-campo" for="sala-fecha">Fecha</label>
+              <input id="sala-fecha" class="campo" type="date" name="fecha" required>
+            </div>
+            <div>
+              <label class="etiqueta-campo" for="sala-hora">Hora de inicio</label>
+              <select id="sala-hora" class="campo" name="hora"></select>
+            </div>
+          </div>
+          <p class="error-campo" data-sala-sin-horas hidden>Para hoy ya no quedan horarios. Elige otra fecha.</p>
+          <div class="sala-campo-doble">
+            <div>
+              <label class="etiqueta-campo" for="sala-duracion">Duración</label>
+              <select id="sala-duracion" class="campo" name="duracion"></select>
+            </div>
+            <div>
+              <label class="etiqueta-campo" for="sala-jugadores">Jugadores</label>
+              <select id="sala-jugadores" class="campo" name="jugadores">
+                {% for n in "12345678" %}<option value="{{ n }}"{% if n == "2" %} selected{% endif %}>{{ n }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="etiqueta-campo" for="sala-nombre">Tu nombre</label>
+            <input id="sala-nombre" class="campo" type="text" name="nombre" maxlength="60" autocomplete="name" placeholder="Nombre y apellido" required aria-describedby="sala-nombre-error">
+            <p class="error-campo" id="sala-nombre-error" data-sala-error-nombre hidden>Escribe tu nombre para que el club sepa a quién confirmar.</p>
+          </div>
+        </div>
+
+        <div class="sala-total" aria-live="polite">
+          <div class="flex items-baseline justify-between gap-4">
+            <span class="text-sm font-semibold text-marfil/75">Valor estimado</span>
+            <output class="font-display text-4xl text-oro" data-sala-total>—</output>
+          </div>
+          <p class="mt-1.5 text-sm text-marfil/70" data-sala-desglose></p>
+        </div>
+
+        <a href="{{ wa_reservas }}" target="_blank" rel="noopener noreferrer" data-sala-whatsapp data-evento="cta_reservar" data-evento-origen="sala" class="btn btn-lg btn-whatsapp w-full">{% include "club/parciales/icono_whatsapp.html" with clase="h-5 w-5" %}Reservar por WhatsApp</a>
+        <p class="mt-4 text-sm leading-relaxed text-marfil/65">La reserva queda sujeta a confirmación por WhatsApp. Por ahora la web no muestra qué mesas están ocupadas: el club revisa la disponibilidad y te responde.</p>
+      </form>
+    </div>
+  </div>
+</section>
+{{ sala|json_script:"sala-datos" }}
+<script type="module" src="{% static 'club/js/sala/principal.js' %}"></script>
