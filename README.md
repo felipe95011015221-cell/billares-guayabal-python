@@ -104,6 +104,17 @@ Pasos:
 
 En Vercel el disco es de solo lectura, así que el panel no permite subir fotos nuevas. Las fotos se agregan en `club/static/club/img` y en `GALERIA_INICIAL` de `negocio.py`.
 
+## Sala interactiva de reservas
+
+La página `/reservas/` muestra la sala del club en 3D. Cada mesa es un objeto independiente, numerado y seleccionable, con su propia lámpara. Al elegir una mesa, el panel arma la reserva: mesa, modalidad, fecha, hora, duración, jugadores, nombre y valor estimado. El botón abre WhatsApp con todo escrito.
+
+- **Tecnología**: [Three.js](https://threejs.org) r170 (WebGL), incluido en `club/static/club/vendor/three` con su licencia MIT. Se descarga solo cuando la sala se acerca a la pantalla, y las texturas se generan en el navegador, sin imágenes.
+- **Vista ligera**: plano en CSS 3D, sin WebGL. Se usa sola en equipos con poca memoria o en modo de ahorro de datos, si falla WebGL, o si la persona la elige.
+- **Distribución**: `club/static/club/js/sala/distribucion.js` (en metros). Cuando el club tenga el plano real, se cambian `SALA` y `PUESTOS` y la escena 3D y el plano ligero se ajustan solos.
+- **Valor**: `precios.js` calcula por bloques de 30 minutos. Usa la tarifa de cada mesa del panel y la promoción de `negocio.py` (`PROMO_HORA_VALOR`, hasta `PROMO_HORA_HASTA_MIN`). La promoción solo se aplica mientras haya en el panel una promoción vigente cuyo título incluya «8.000».
+- **Disponibilidad y pagos**: hoy no hay ocupación en línea, así que la sala no muestra estados y avisa que la reserva queda sujeta a confirmación. `disponibilidad.js` es el punto para conectar la disponibilidad en tiempo real; la escena ya pinta los estados (`marcarEstados`). Ahí mismo se agregaría un canal de pago.
+- **Pruebas de JavaScript**: `node --test tests_js/`.
+
 ## Datos pendientes de confirmar con el club
 
 En `club/negocio.py` cada dato tiene un estado: `confirmado`, `publico` (visto en fuentes públicas) o `pendiente`.
