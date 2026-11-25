@@ -264,3 +264,219 @@
 @media (scripting: none) {
   .revelar { opacity: 1; transform: none; }
 }
+
+/* ---------- Sala interactiva de reservas (escena 3D, plano ligero y panel) ---------- */
+@layer components {
+  .sala {
+    position: relative;
+    padding-block: 4.5rem 5.5rem;
+    color: var(--color-marfil);
+    background:
+      radial-gradient(ellipse 70% 50% at 30% 0%, rgb(242 194 48 / 0.07), transparent 70%),
+      linear-gradient(180deg, var(--color-carbon) 0%, #061226 100%);
+  }
+  .sala-cabecera { display: grid; gap: 2rem; align-items: end; }
+  @media (min-width: 1024px) { .sala-cabecera { grid-template-columns: 1fr auto; } }
+  .sala-leyenda { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; font-size: 0.9rem; line-height: 1.35; color: rgb(243 245 240 / 0.75); }
+  .sala-leyenda li { display: flex; align-items: center; gap: 0.75rem; }
+  .sala-leyenda b { color: var(--color-marfil); font-weight: 650; }
+
+  /* muestra de paño (azul tres bandas, verde pool) */
+  .sala-pano {
+    flex: none; width: 2.1rem; height: 1.25rem; border-radius: 0.3rem;
+    border: 3px solid #4a2015;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25), 0 4px 10px -4px rgb(0 0 0 / 0.6);
+  }
+  .sala-pano-carambola { background: radial-gradient(circle at 70% 50%, #d3271c 0 2px, transparent 3px), radial-gradient(circle at 30% 40%, #f7f5ec 0 2px, transparent 3px), #1e5fc0; }
+  .sala-pano-pool { background: radial-gradient(circle at 70% 50%, #f4c20d 0 2px, transparent 3px), radial-gradient(circle at 30% 50%, #f7f5ec 0 2px, transparent 3px), #0e7a4b; }
+  .sala-ficha-precio {
+    flex: none; display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 999px;
+    background: var(--color-oro); color: var(--color-carbon); font-weight: 800;
+  }
+
+  .sala-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; margin-top: 2.5rem; }
+  .sala-grid > * { min-width: 0; }
+  @media (min-width: 1024px) {
+    .sala-grid { grid-template-columns: minmax(0, 1fr) 23.5rem; grid-template-rows: auto auto; align-items: start; }
+    .sala-escenario { grid-column: 1; grid-row: 1; }
+    .sala-pie { grid-column: 1; grid-row: 2; }
+    .sala-panel { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 6.5rem; }
+  }
+
+  /* escenario: fondo de salón a media luz detrás del lienzo transparente */
+  .sala-escenario {
+    position: relative; isolation: isolate; overflow: hidden;
+    height: clamp(26rem, 64svh, 44rem);
+    border-radius: 1.5rem;
+    border: 1px solid rgb(243 245 240 / 0.08);
+    background:
+      radial-gradient(ellipse 60% 55% at 45% 45%, #17345f 0%, #0b1d3a 45%, #050c18 100%);
+    box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+  @media (min-width: 1024px) { .sala-escenario { height: clamp(32rem, 72svh, 46rem); } }
+  .sala-lienzo, .sala-lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .sala-lienzo canvas { outline: none; }
+  .sala-carga {
+    position: absolute; inset: 0; display: grid; place-items: center; z-index: 2;
+    font-size: 0.95rem; color: rgb(243 245 240 / 0.7); pointer-events: none;
+  }
+  .sala-carga::before {
+    content: ""; position: absolute; width: 14rem; height: 14rem; border-radius: 999px;
+    background: radial-gradient(circle, rgb(255 217 160 / 0.22), transparent 65%);
+    animation: sala-respira 2.4s ease-in-out infinite;
+  }
+  @keyframes sala-respira { 50% { transform: scale(1.15); opacity: 0.6; } }
+
+  .sala-controles {
+    position: absolute; z-index: 3; left: 1rem; right: 1rem; top: 1rem;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; pointer-events: none;
+  }
+  .sala-vistas, .sala-zoom {
+    pointer-events: auto; display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 999px;
+    background: rgb(6 15 31 / 0.72); border: 1px solid rgb(243 245 240 / 0.1);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .sala-control {
+    min-height: 2.5rem; min-width: 2.5rem; padding-inline: 0.9rem; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 650; color: rgb(243 245 240 / 0.82);
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .sala-control:hover { color: var(--color-oro); }
+  .sala-control[aria-pressed="true"] { background: var(--color-oro); color: var(--color-carbon); }
+  .sala-control-icono { padding: 0; display: grid; place-items: center; }
+  .sala-control-icono svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  @media (max-width: 479px) { .sala-control { padding-inline: 0.7rem; font-size: 0.8rem; } }
+
+  .sala-ayuda {
+    position: absolute; z-index: 3; left: 50%; bottom: 1rem; transform: translateX(-50%);
+    max-width: calc(100% - 2rem); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 0.8rem; color: rgb(243 245 240 / 0.62); pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .hay-eleccion .sala-ayuda { opacity: 0; }
+
+  .sala-etiqueta {
+    position: absolute; z-index: 4; left: 0; top: 0; pointer-events: none;
+    display: grid; gap: 0.1rem; padding: 0.6rem 0.8rem; border-radius: 0.75rem; font-size: 0.8rem; line-height: 1.3;
+    background: rgb(6 15 31 / 0.88); border: 1px solid rgb(242 194 48 / 0.35); color: rgb(243 245 240 / 0.8);
+    box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.8);
+  }
+  .sala-etiqueta b { font-family: var(--font-display); font-size: 1.05rem; color: var(--color-oro); }
+
+  .sala-barra {
+    position: absolute; z-index: 3; left: 0.75rem; right: 0.75rem; bottom: 0.75rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 0.5rem 0.5rem 0.5rem 1rem; border-radius: 999px;
+    background: rgb(6 15 31 / 0.85); border: 1px solid rgb(242 194 48 / 0.3);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    animation: sala-sube 0.45s var(--ease-club) both;
+  }
+  .sala-barra-texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: rgb(243 245 240 / 0.78); }
+  .sala-barra-texto b { font-family: var(--font-display); font-size: 1.05rem; color: var(--color-marfil); margin-right: 0.35rem; }
+  @media (min-width: 1024px) { .sala-barra { display: none; } }
+  @keyframes sala-sube { from { opacity: 0; transform: translateY(12px); } }
+
+  /* fichas: selección accesible con teclado y lector de pantalla */
+  .sala-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .sala-fichas {
+    display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.25rem 0.25rem 0.5rem; margin: -0.25rem; scrollbar-width: thin;
+    max-width: 100%;
+  }
+  .sala-ficha {
+    flex: none; display: flex; align-items: center; gap: 0.65rem; min-height: 3.25rem; padding: 0.45rem 1rem 0.45rem 0.6rem;
+    border-radius: 0.9rem; border: 1px solid rgb(243 245 240 / 0.12); background: rgb(243 245 240 / 0.03);
+    text-align: left; transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+  }
+  .sala-ficha b { display: block; font-family: var(--font-display); font-size: 1rem; line-height: 1.1; }
+  .sala-ficha small { display: block; font-size: 0.75rem; color: rgb(243 245 240 / 0.6); }
+  .sala-ficha:hover, .sala-ficha.es-resaltada { border-color: rgb(242 194 48 / 0.55); }
+  .sala-ficha[aria-pressed="true"] { border-color: var(--color-oro); background: rgb(242 194 48 / 0.12); }
+  .sala-ficha[aria-pressed="true"] b { color: var(--color-oro); }
+  .sala-modo { min-height: 2.75rem; font-size: 0.85rem; font-weight: 600; color: rgb(243 245 240 / 0.65); text-decoration: underline; text-underline-offset: 4px; }
+  .sala-modo:hover { color: var(--color-oro); }
+
+  /* panel de reserva */
+  .sala-panel {
+    border-radius: 1.5rem; padding: 1.5rem; scroll-margin-top: 6rem;
+    background: linear-gradient(180deg, rgb(27 58 102 / 0.55), rgb(17 40 74 / 0.75));
+    border: 1px solid rgb(243 245 240 / 0.1);
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8);
+  }
+  @media (min-width: 640px) { .sala-panel { padding: 1.75rem; } }
+  .sala-panel-cabeza { padding-bottom: 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid rgb(243 245 240 / 0.1); }
+  .sala-campos { display: grid; gap: 1rem; }
+  .sala-campo-doble { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .sala-campos .campo { min-height: 2.9rem; padding: 0.6rem 0.8rem; }
+  .sala-campos input[type="date"].campo { color-scheme: dark; }
+  .sala-dato { display: flex; align-items: center; min-height: 2.9rem; font-weight: 650; color: var(--color-marfil); }
+  .sala-total { margin: 1.5rem 0 1.25rem; padding: 1rem 1.1rem; border-radius: 1rem; background: rgb(6 15 31 / 0.45); border: 1px solid rgb(242 194 48 / 0.2); }
+  .sala-panel [aria-disabled="true"] { opacity: 0.55; }
+
+  /* ---------- vista ligera: plano en CSS 3D ---------- */
+  .sala-plano-marco { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1600px; padding: 4.5rem 1rem 3rem; }
+  .plano {
+    --zoom: 1;
+    width: min(100%, 60rem); aspect-ratio: var(--proporcion);
+    transform: scale(var(--zoom)) rotateX(52deg) rotateZ(-28deg);
+    transform-style: preserve-3d;
+    transition: transform 0.8s var(--ease-club);
+  }
+  .plano[data-vista="cenital"] { transform: scale(var(--zoom)); }
+  .plano[data-vista="ras"] { transform: scale(calc(var(--zoom) * 1.15)) rotateX(64deg) rotateZ(-14deg); }
+  .plano-piso {
+    position: relative; width: 100%; height: 100%; border-radius: 0.5rem; transform-style: preserve-3d;
+    background:
+      repeating-linear-gradient(90deg, rgb(0 0 0 / 0.35) 0 1px, transparent 1px 11%),
+      repeating-linear-gradient(0deg, rgb(0 0 0 / 0.3) 0 1px, transparent 1px 12.5%),
+      linear-gradient(135deg, #2a1d14, #1a120c);
+    box-shadow: 0 0 0 6px #120c08, 0 50px 60px -20px rgb(0 0 0 / 0.75);
+  }
+  .plano-division { position: absolute; top: 0; height: 58%; width: 0.5%; background: linear-gradient(#d4a83a, #8a6a1e); box-shadow: 0 0 8px rgb(242 194 48 / 0.3); }
+  .plano-mesa {
+    position: absolute; transform: translate(-50%, -50%); padding: 0.55%;
+    border-radius: 6%/12%; background: linear-gradient(135deg, #6b3420, #3a170c);
+    box-shadow: 1px 1px 0 #2a0f08, 2px 2px 0 #2a0f08, 3px 3px 0 #2a0f08, 4px 4px 0 #1d0a05, 10px 14px 18px rgb(0 0 0 / 0.55);
+    transition: transform 0.35s var(--ease-club), box-shadow 0.35s;
+    cursor: pointer;
+  }
+  .plano-pano {
+    position: relative; display: block; width: 100%; height: 100%; border-radius: 3%/6%;
+    box-shadow: inset 0 0 0 3px rgb(0 0 0 / 0.18), inset 0 0 22px rgb(255 217 160 / 0.25);
+  }
+  .plano-mesa-carambola .plano-pano { background: radial-gradient(ellipse at 50% 45%, #2f74d6, #1a4f9f 75%); }
+  .plano-mesa-pool .plano-pano { background:
+    radial-gradient(circle at 0 0, #050505 0 5%, transparent 5.5%), radial-gradient(circle at 100% 0, #050505 0 5%, transparent 5.5%),
+    radial-gradient(circle at 0 100%, #050505 0 5%, transparent 5.5%), radial-gradient(circle at 100% 100%, #050505 0 5%, transparent 5.5%),
+    radial-gradient(circle at 50% 0, #050505 0 4%, transparent 4.5%), radial-gradient(circle at 50% 100%, #050505 0 4%, transparent 4.5%),
+    radial-gradient(ellipse at 50% 45%, #14955c, #0b6a40 75%); }
+  .plano-pano .bola { position: absolute; width: 5%; aspect-ratio: 1; border-radius: 999px; box-shadow: 0 1px 1px rgb(0 0 0 / 0.5); }
+  .bola.blanca, .bola.bb { background: #f7f5ec; left: 28%; top: 58%; }
+  .bola.amarilla { background: #f2c21b; left: 22%; top: 30%; }
+  .bola.roja { background: #d3271c; left: 72%; top: 48%; }
+  .bola.b1 { background: #f4c20d; left: 66%; top: 46%; }
+  .bola.b2 { background: #1f4fbf; left: 71%; top: 38%; }
+  .bola.b3 { background: #d62b1e; left: 71%; top: 54%; }
+  .bola.b4 { background: #101010; left: 76%; top: 46%; }
+  .bola.bb { left: 24%; top: 46%; }
+  .plano-numero {
+    position: absolute; left: -6%; top: -18%; display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 999px;
+    font-family: var(--font-display); font-size: 0.95rem; color: var(--color-marfil); background: rgb(10 27 52 / 0.92); border: 2px solid rgb(242 194 48 / 0.85);
+  }
+  .plano-mesa:hover, .plano-mesa.es-resaltada { transform: translate(-50%, -50%) translateZ(10px); box-shadow: 1px 1px 0 #2a0f08, 2px 2px 0 #2a0f08, 3px 3px 0 #2a0f08, 4px 4px 0 #1d0a05, 0 0 0 3px rgb(242 194 48 / 0.45), 0 0 40px rgb(255 217 160 / 0.35); }
+  .plano-mesa.es-elegida { transform: translate(-50%, -50%) translateZ(16px); box-shadow: 1px 1px 0 #2a0f08, 2px 2px 0 #2a0f08, 3px 3px 0 #2a0f08, 4px 4px 0 #1d0a05, 0 0 0 4px var(--color-oro), 0 0 60px rgb(242 194 48 / 0.55); }
+  .plano-mesa.es-elegida .plano-numero { background: var(--color-oro); color: var(--color-carbon); border-color: #fff1b8; }
+  .plano-mesa[data-estado="ocupada"], .plano-mesa[data-estado="mantenimiento"] { filter: grayscale(0.7) brightness(0.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plano, .plano-mesa, .sala-barra, .sala-carga::before { transition: none; animation: none; }
+}
+@media (max-width: 639px) {
+  .sala-controles .sala-zoom { position: absolute; right: 0; bottom: 0; }
+  .sala-zoom { flex-direction: column; }
+  .sala-controles { bottom: 3.25rem; top: 1rem; align-content: flex-start; }
+  .sala-ayuda { left: 1rem; transform: none; text-align: left; max-width: calc(100% - 5rem); }
+  .hay-eleccion .sala-controles { bottom: 5rem; }
+  .plano { width: 88%; transform: scale(var(--zoom)) rotateX(46deg) rotateZ(-62deg); }
+  .plano[data-vista="ras"] { transform: scale(calc(var(--zoom) * 1.1)) rotateX(60deg) rotateZ(-70deg); }
+  .plano[data-vista="cenital"] { transform: scale(var(--zoom)) rotateZ(-90deg); }
+}
