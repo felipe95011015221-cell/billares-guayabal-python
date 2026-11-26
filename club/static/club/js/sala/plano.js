@@ -32,8 +32,11 @@ export function crearPlano(marco, mesas, { alSeleccionar, alResaltar } = {}) {
     boton.dataset.mesa = m.id;
     boton.style.left = `${pct(m.x, b.xMin, ancho)}%`;
     boton.style.top = `${pct(m.z, b.zMin, fondo)}%`;
-    boton.style.width = `${((med.largo + 0.38) / ancho) * 100}%`;
-    boton.style.height = `${((med.ancho + 0.38) / fondo) * 100}%`;
+    const girada = Math.abs(Math.sin(m.rot || 0)) > 0.7; // atravesada a lo ancho del salón
+    const [enX, enZ] = girada ? [med.ancho, med.largo] : [med.largo, med.ancho];
+    boton.style.width = `${((enX + 0.38) / ancho) * 100}%`;
+    boton.style.height = `${((enZ + 0.38) / fondo) * 100}%`;
+    if (girada) boton.classList.add("plano-mesa-girada");
     boton.innerHTML = `<span class="plano-pano">${
       m.modalidad === "pool"
         ? '<i class="bola b1"></i><i class="bola b2"></i><i class="bola b3"></i><i class="bola b4"></i><i class="bola bb"></i>'

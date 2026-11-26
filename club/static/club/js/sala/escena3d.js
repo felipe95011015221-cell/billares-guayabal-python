@@ -8,7 +8,7 @@ import { OrbitControls } from "../../vendor/three/OrbitControls.js";
 import { RoundedBoxGeometry } from "../../vendor/three/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "../../vendor/three/RoomEnvironment.js";
 import * as tx from "./texturas.js";
-import { MEDIDAS, limites } from "./distribucion.js";
+import { MEDIDAS, huella, limites } from "./distribucion.js";
 
 const ORO = new THREE.Color("#f2c230");
 const LUZ_CALIDA = new THREE.Color("#ffd9a0");
@@ -69,6 +69,9 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     pantalla: new THREE.MeshStandardMaterial({ color: "#0b6b4b", metalness: 0.55, roughness: 0.32 }),
     cable: new THREE.MeshStandardMaterial({ color: "#151515", roughness: 0.6 }),
     oscuro: new THREE.MeshStandardMaterial({ color: "#0d0a08", roughness: 0.9 }),
+    // mesas de tres bandas del club: cuerpo gris y riel de roble claro
+    gris: new THREE.MeshPhysicalMaterial({ color: "#8e9396", roughness: 0.42, clearcoat: 0.4, clearcoatRoughness: 0.3 }),
+    roble: new THREE.MeshPhysicalMaterial({ map: tx.madera({ base: "#b89f7c", oscuro: "#8f7656", claro: "#d6c3a2", semilla: 13 }), roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.25 }),
     cuero: new THREE.MeshStandardMaterial({ color: "#14284a", roughness: 0.55 }),
   };
   const bolaMat = (color) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.05 });
@@ -112,7 +115,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     scene.add(m);
   };
   pared(anchoSala + 0.16, centro.x + 0.08, b.zMin - 0.08, 0);
-  pared(fondoSala, b.xMin - 0.08, centro.z, Math.PI / 2);
+  pared(fondoSala, b.xMax + 0.08, centro.z, -Math.PI / 2);
 
   const letrero = (texto, x, y, z, rotY, ancho, tam) => {
     const mat = new THREE.MeshBasicMaterial({ map: tx.letrero(texto, { tam }), transparent: true, toneMapped: false, depthWrite: false });
@@ -121,16 +124,27 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     p.rotation.y = rotY;
     scene.add(p);
   };
-  letrero("Tres bandas", (b.xMin + division) / 2, 2.55, b.zMin + 0.02, 0, 4.2, 140);
+  // franja verde con el nombre del club, como la del mezanine
+  const franjaLargo = Math.min(7.4, division - b.xMin - 1);
+  const franja = new THREE.Mesh(new THREE.BoxGeometry(franjaLargo, 0.62, 0.12),
+    new THREE.MeshStandardMaterial({ color: "#0b4a33", roughness: 0.5, metalness: 0.2 }));
+  franja.position.set(b.xMin + 0.6 + franjaLargo / 2, 2.72, b.zMin + 0.08);
+  scene.add(franja);
+  const nombre = new THREE.Mesh(new THREE.PlaneGeometry(franjaLargo * 0.96, (franjaLargo * 0.96) / 8),
+    new THREE.MeshBasicMaterial({ map: tx.letrero("Club de Billares Guayabal", { tam: 150, ancho: 2048 }), transparent: true, toneMapped: false, depthWrite: false }));
+  nombre.position.set(franja.position.x, 2.72, b.zMin + 0.15);
+  scene.add(nombre);
+  letrero("Tres bandas", Math.max(franja.position.x + franjaLargo / 2 + 2.2, division - 2.4), 2.6, b.zMin + 0.02, 0, 4.2, 140);
   letrero("Pool", (division + b.xMax) / 2, 2.55, b.zMin + 0.02, 0, 3.2, 150);
-  letrero("Guayabal", b.xMin + 0.02, 2.5, centro.z, Math.PI / 2, 4.4, 160);
+  letrero("Guayabal", b.xMax - 0.02, 2.5, centro.z, -Math.PI / 2, Math.min(4.4, fondoSala - 1), 160);
 
   // media pared con pasamanos de latón entre las dos zonas
-  const muro = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 4.6), M.madera);
-  muro.position.set(division, 0.475, b.zMin + 2.3);
+  const LARGO_MURO = Math.min(2.2, fondoSala * 0.35);
+  const muro = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, LARGO_MURO), M.madera);
+  muro.position.set(division, 0.475, b.zMin + LARGO_MURO / 2);
   muro.castShadow = muro.receiveShadow = true;
-  const pasamanos = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 4.7), M.laton);
-  pasamanos.position.set(division, 0.97, b.zMin + 2.3);
+  const pasamanos = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, LARGO_MURO + 0.1), M.laton);
+  pasamanos.position.set(division, 0.97, b.zMin + LARGO_MURO / 2);
   scene.add(muro, pasamanos);
 
   // bancas de espectadores contra la pared del fondo y portatacos en la pared izquierda
@@ -142,22 +156,22 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     base.castShadow = cojin.castShadow = true;
     scene.add(base, cojin);
   };
-  [-6.2, -2.3, 1.6, 6.1].forEach(banca);
+  mesasDatos.filter((m) => m.z - huella(m).hz > b.zMin + 0.7).forEach((m) => banca(m.x));
 
   const geoTaco = new THREE.CylinderGeometry(0.008, 0.016, 1.45, 8);
   const portatacos = (z) => {
     const tabla = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.5, 0.9), M.madera);
-    tabla.position.set(b.xMin + 0.03, 1.15, z);
+    tabla.position.set(b.xMax - 0.03, 1.15, z);
     scene.add(tabla);
     for (let i = 0; i < 7; i++) {
       const taco = new THREE.Mesh(geoTaco, M.maderaClara);
-      taco.position.set(b.xMin + 0.1, 1.12, z - 0.36 + i * 0.12);
+      taco.position.set(b.xMax - 0.1, 1.12, z - 0.36 + i * 0.12);
       taco.rotation.x = (i - 3) * 0.015;
       scene.add(taco);
     }
   };
-  portatacos(-1.9);
-  portatacos(1.95);
+  portatacos(centro.z - fondoSala * 0.25);
+  portatacos(centro.z + fondoSala * 0.25);
 
   // ---------- luces de ambiente ----------
   scene.add(new THREE.HemisphereLight(0x35548a, 0x1a0e08, 0.55));
@@ -167,7 +181,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   if (alta) {
     clave.castShadow = true;
     clave.shadow.mapSize.set(2048, 2048);
-    Object.assign(clave.shadow.camera, { left: -12, right: 12, top: 9, bottom: -9, near: 2, far: 40 });
+    Object.assign(clave.shadow.camera, { left: -15, right: 15, top: 11, bottom: -11, near: 2, far: 45 });
     clave.shadow.bias = -0.0004;
     clave.shadow.normalBias = 0.02;
   }
@@ -185,6 +199,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     const OL = L + 2 * (c + r), OW = W + 2 * (c + r);
     const grupo = new THREE.Group();
     grupo.position.set(m.x, 0, m.z);
+    grupo.rotation.y = m.rot || 0;
     const cuerpo = new THREE.Group(); // lo que se eleva al elegir la mesa
     grupo.add(cuerpo);
     const add = (geo, mat, x, y, z, sombra = true) => {
@@ -198,21 +213,30 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     const pano = esPool ? M.panoVerde : M.panoAzul;
     const banda = esPool ? M.bandaVerde : M.bandaAzul;
 
-    add(new RoundedBoxGeometry(OL - 0.18, 0.2, OW - 0.18, 2, 0.05), M.madera, 0, 0.66, 0);
+    const matCuerpo = esPool ? M.madera : M.gris;
+    const matRiel = esPool ? M.madera : M.roble;
+    if (esPool) add(new RoundedBoxGeometry(OL - 0.18, 0.2, OW - 0.18, 2, 0.05), matCuerpo, 0, 0.66, 0);
+    else add(new RoundedBoxGeometry(OL - 0.06, 0.34, OW - 0.06, 2, 0.04), matCuerpo, 0, 0.6, 0);
     add(new THREE.BoxGeometry(L + 2 * c, 0.05, W + 2 * c), pano, 0, ALTO_PANO - 0.025, 0, false);
     for (const s of [-1, 1]) {
       add(new THREE.BoxGeometry(L + 2 * c, 0.035, c), banda, 0, ALTO_PANO + 0.0175, s * (W / 2 + c / 2), false);
       add(new THREE.BoxGeometry(c, 0.035, W), banda, s * (L / 2 + c / 2), ALTO_PANO + 0.0175, 0, false);
-      add(new RoundedBoxGeometry(OL, 0.055, r, 2, 0.02), M.madera, 0, ALTO_PANO + 0.02, s * (W / 2 + c + r / 2));
-      add(new RoundedBoxGeometry(r, 0.055, W + 2 * c + 0.002, 2, 0.02), M.madera, s * (L / 2 + c + r / 2), ALTO_PANO + 0.02, 0);
+      add(new RoundedBoxGeometry(OL, 0.055, r, 2, 0.02), matRiel, 0, ALTO_PANO + 0.02, s * (W / 2 + c + r / 2));
+      add(new RoundedBoxGeometry(r, 0.055, W + 2 * c + 0.002, 2, 0.02), matRiel, s * (L / 2 + c + r / 2), ALTO_PANO + 0.02, 0);
     }
-    // patas cónicas con pies de latón
-    const geoPata = new THREE.CylinderGeometry(0.085, 0.11, 0.56, 4);
-    const geoPie = new THREE.CylinderGeometry(0.1, 0.11, 0.04, 16);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const pata = add(geoPata, M.madera, sx * (OL / 2 - 0.34), 0.3, sz * (OW / 2 - 0.3));
-      pata.rotation.y = Math.PI / 4;
-      add(geoPie, M.laton, sx * (OL / 2 - 0.34), 0.02, sz * (OW / 2 - 0.3), false);
+    if (esPool) {
+      // patas cónicas con pies de latón
+      const geoPata = new THREE.CylinderGeometry(0.085, 0.11, 0.56, 4);
+      const geoPie = new THREE.CylinderGeometry(0.1, 0.11, 0.04, 16);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        const pata = add(geoPata, M.madera, sx * (OL / 2 - 0.34), 0.3, sz * (OW / 2 - 0.3));
+        pata.rotation.y = Math.PI / 4;
+        add(geoPie, M.laton, sx * (OL / 2 - 0.34), 0.02, sz * (OW / 2 - 0.3), false);
+      }
+    } else {
+      // patas de columna grises, como las mesas del club
+      const geoColumna = new THREE.CylinderGeometry(0.13, 0.13, 0.44, 20);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(geoColumna, M.gris, sx * (OL / 2 - 0.42), 0.22, sz * (OW / 2 - 0.36));
     }
     // diamantes de nácar sobre los rieles
     const geoDiamante = new THREE.CircleGeometry(0.014, 10);
@@ -240,9 +264,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
         add(geoAro, M.cromo, x, ALTO_PANO + 0.05, z, false);
       }
     } else {
-      // esquineros de latón
-      const geoEsquina = new RoundedBoxGeometry(0.17, 0.06, 0.17, 2, 0.02);
-      for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(geoEsquina, M.laton, sx * (OL / 2 - 0.08), ALTO_PANO + 0.024, sz * (OW / 2 - 0.08), false);
+      // las mesas de tres bandas del club no llevan esquineros metálicos
     }
 
     // bolas
@@ -373,9 +395,10 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
 
   const esVertical = () => camera.aspect < 1;
   const VISTAS = {
-    iso: () => (esVertical() ? { theta: 1.5, phi: 0.86 } : { theta: 0.64, phi: 0.98 }),
-    cenital: () => ({ theta: esVertical() ? Math.PI / 2 : 0, phi: 0.001 }),
-    ras: () => ({ theta: esVertical() ? 1.2 : 0.5, phi: 1.22, acercar: 0.62 }),
+    // desde la mesa 1 mirando hacia el fondo del salón, como la foto del club
+    iso: () => (esVertical() ? { theta: -1.5, phi: 0.92 } : { theta: -1.02, phi: 0.98 }),
+    cenital: () => ({ theta: esVertical() ? -Math.PI / 2 : 0, phi: 0.001 }),
+    ras: () => ({ theta: esVertical() ? -1.45 : -1.2, phi: 1.2, acercar: 0.62 }),
   };
 
   const esferica = new THREE.Spherical();
@@ -462,7 +485,8 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     const phi = Math.min(Math.max(actual.phi, 0.62), 1.12);
     const target = new THREE.Vector3(m.grupo.position.x, 0.55, m.grupo.position.z);
     const puntos = [];
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) puntos.push(new THREE.Vector3(target.x + sx * (m.OL / 2 + 0.5), 0, target.z + sz * (m.OW / 2 + 0.5)));
+    const { hx, hz } = huella(m.datos, 0.5);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) puntos.push(new THREE.Vector3(target.x + sx * hx, 0, target.z + sz * hz));
     puntos.push(new THREE.Vector3(target.x, 2.2, target.z));
     const e = encuadrar(puntos, target, actual.theta, phi, 0.7);
     animarCamara({ target: e.target, theta: actual.theta, phi, radio: Math.min(actual.radio, e.radio) }, 1000);

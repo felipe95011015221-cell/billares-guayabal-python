@@ -115,17 +115,17 @@ export function pared() {
 }
 
 /** Letrero luminoso para la pared (texto dorado sobre transparente). */
-export function letrero(texto, { tam = 150, color = "#f2c230" } = {}) {
-  const [c, g] = lienzo(1024, 256);
+export function letrero(texto, { tam = 150, color = "#f2c230", ancho = 1024 } = {}) {
+  const [c, g] = lienzo(ancho, 256);
   g.font = `700 ${tam}px "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif`;
   g.textAlign = "center"; g.textBaseline = "middle";
   g.shadowColor = color; g.shadowBlur = 28;
   g.fillStyle = color;
-  g.fillText(texto, 512, 132);
+  g.fillText(texto, ancho / 2, 132);
   g.shadowBlur = 0;
   g.fillStyle = "#fff5cf";
   g.globalAlpha = 0.55;
-  g.fillText(texto, 512, 132);
+  g.fillText(texto, ancho / 2, 132);
   return textura(c, { repetir: [1, 1] });
 }
 
