@@ -84,9 +84,15 @@ class Integrante:
         return "".join(p[0] for p in self.nombre.split()[:2]).upper()
 
 
-# Equipo de trabajo. Pendiente: el propietario enviará nombres, cargos y fotos.
-# Mientras la lista esté vacía, la sección «Nuestro equipo» no se muestra.
-EQUIPO: list[Integrante] = []
+# Equipo de trabajo, confirmado por el propietario (26 nov. 2026). Las fotos llegarán después:
+# mientras tanto cada persona se muestra con un avatar y sus iniciales.
+EQUIPO: list[Integrante] = [
+    Integrante("Jose Domingo Duarte", "Administrador"),
+    Integrante("Katy Montero", "Cajera"),
+    Integrante("Juliana Acevedo", "Cajera"),
+    Integrante("Roberto Sepulveda", "Ayudante"),
+    Integrante("Nataly Soto", "Mesera"),
+]
 
 # ---------- Sala interactiva de reservas (calculadora de valor) ----------
 # Horario en minutos desde la medianoche. El cierre pasa de medianoche: 26 * 60 = 2:00 a. m. del día siguiente.

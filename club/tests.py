@@ -690,7 +690,8 @@ class PaginaClubTests(TestCase):
 
         from . import negocio
 
-        self.assertNotIn('id="equipo"', self.client.get("/club/").content.decode())
+        with mock.patch.object(negocio, "EQUIPO", []):
+            self.assertNotIn('id="equipo"', self.client.get("/club/").content.decode())
         equipo = [negocio.Integrante("Ana Pérez", "Administradora", "Atiende reservas y torneos.")]
         with mock.patch.object(negocio, "EQUIPO", equipo):
             html = self.client.get("/club/").content.decode()
@@ -698,3 +699,11 @@ class PaginaClubTests(TestCase):
         self.assertIn("Ana Pérez", html)
         self.assertIn("Administradora", html)
         self.assertIn(">AP<", html)  # sin foto se muestran las iniciales
+
+    def test_equipo_del_club_con_avatares(self):
+        html = self.client.get("/club/").content.decode()
+        for nombre, cargo in [("Jose Domingo Duarte", "Administrador"), ("Katy Montero", "Cajera"), ("Juliana Acevedo", "Cajera"),
+                              ("Roberto Sepulveda", "Ayudante"), ("Nataly Soto", "Mesera")]:
+            self.assertIn(nombre, html)
+            self.assertIn(cargo, html)
+        self.assertEqual(html.count('viewBox="0 0 80 100"'), 5)  # un avatar por persona mientras llegan las fotos
