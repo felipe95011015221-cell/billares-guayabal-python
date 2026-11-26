@@ -669,3 +669,32 @@ class SoloWhatsAppTests(TestCase):
         self.assertTrue(botones[0].startswith('<a href="https://wa.me/'))
         self.assertIn('rel="noopener noreferrer"', botones[0])
         self.assertIn('href="/eventos/"', botones[1])  # los enlaces que no son de reserva no cambian
+
+
+class PaginaClubTests(TestCase):
+    """La página «El club» muestra las mesas Jimar Europa y, cuando hay datos, el equipo."""
+
+    def test_mesas_jimar_europa_con_su_ficha(self):
+        for i, mod in enumerate(["carambola"] * 5 + ["pool"] * 2, 1):
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, tarifa_hora=15000, orden=i)
+        html = self.client.get("/club/").content.decode()
+        self.assertIn("Jimar Europa", html)
+        self.assertIn("Las 5 mesas de tres bandas", html)
+        self.assertIn("2 mesas más", html)
+        for dato in ("Pizarra de 50 mm", "Bandas KleMatch P37", "Nivelación de 27 puntos", "Estructura en acero"):
+            self.assertIn(dato, html)
+        self.assertIn('href="/reservas/#sala"', html)
+
+    def test_equipo_oculto_sin_datos_y_visible_con_datos(self):
+        from unittest import mock
+
+        from . import negocio
+
+        self.assertNotIn('id="equipo"', self.client.get("/club/").content.decode())
+        equipo = [negocio.Integrante("Ana Pérez", "Administradora", "Atiende reservas y torneos.")]
+        with mock.patch.object(negocio, "EQUIPO", equipo):
+            html = self.client.get("/club/").content.decode()
+        self.assertIn('id="equipo"', html)
+        self.assertIn("Ana Pérez", html)
+        self.assertIn("Administradora", html)
+        self.assertIn(">AP<", html)  # sin foto se muestran las iniciales

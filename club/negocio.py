@@ -55,6 +55,39 @@ def datos_pendientes():
     return [{"campo": c, "valor": d.valor or "—", "estado": d.estado} for c, d in campos if d.por_confirmar]
 
 
+# ---------- Mesas del club (página «El club») ----------
+# Confirmado por el propietario (26 nov. 2026): las mesas de tres bandas son Jimar Europa.
+# Características tomadas de la ficha técnica del fabricante que envió el propietario.
+MESA_TRES_BANDAS = {
+    "marca": "Jimar",
+    "modelo": "Europa",
+    "caracteristicas": [
+        ("Pizarra de 50 mm", "Pizarra genuina con acabado de alta precisión, para que la bola corra pareja en toda la mesa."),
+        ("Pizarra y bandas con calefacción", "Mantienen el paño seco y a temperatura estable, con controlador de temperatura."),
+        ("Bandas KleMatch P37", "Caucho KleMatch en las bandas, para un rebote parejo en cada carambola."),
+        ("Nivelación de 27 puntos", "La pizarra se nivela en 27 puntos y la mesa se apoya en 6 puntos ajustables al piso."),
+        ("Estructura en acero", "Chasis metálico en perfil de acero tipo C y patas tubulares de acero cold roll."),
+        ("Madera reforestada", "Madera de alta calidad, reforestada y secada en horno."),
+    ],
+}
+
+
+@dataclass(frozen=True)
+class Integrante:
+    nombre: str
+    cargo: str
+    descripcion: str = ""
+    foto: str = ""  # ruta dentro de static/club/img/ (por ejemplo "equipo/nombre.webp"); sin foto se muestran las iniciales
+
+    @property
+    def iniciales(self) -> str:
+        return "".join(p[0] for p in self.nombre.split()[:2]).upper()
+
+
+# Equipo de trabajo. Pendiente: el propietario enviará nombres, cargos y fotos.
+# Mientras la lista esté vacía, la sección «Nuestro equipo» no se muestra.
+EQUIPO: list[Integrante] = []
+
 # ---------- Sala interactiva de reservas (calculadora de valor) ----------
 # Horario en minutos desde la medianoche. El cierre pasa de medianoche: 26 * 60 = 2:00 a. m. del día siguiente.
 HORARIO_APERTURA_MIN = 9 * 60

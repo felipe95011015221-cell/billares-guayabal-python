@@ -81,7 +81,12 @@ def inicio(request):
 
 
 def club(request):
+    cantidades = {g["clave"]: g["cantidad"] for g in _mesas_por_modalidad()}
     return render(request, "club/club.html", {
+        "mesa_tres_bandas": negocio.MESA_TRES_BANDAS,
+        "mesas_carambola": cantidades.get("carambola", 0),
+        "mesas_pool": cantidades.get("pool", 0),
+        "equipo": negocio.EQUIPO,
         "seo_titulo_absoluto": "El club · Billar en Guayabal, Medellín",
         "seo_descripcion": "Conoce el Club de Billares Guayabal: mesas de carambola a tres bandas y pool, ambiente para jugar, aprender y competir en Medellín.",
     })
