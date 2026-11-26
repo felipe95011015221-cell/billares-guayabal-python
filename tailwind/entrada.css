@@ -441,7 +441,7 @@
       linear-gradient(135deg, #2a1d14, #1a120c);
     box-shadow: 0 0 0 6px #120c08, 0 50px 60px -20px rgb(0 0 0 / 0.75);
   }
-  .plano-division { position: absolute; top: 0; height: 58%; width: 0.5%; background: linear-gradient(#d4a83a, #8a6a1e); box-shadow: 0 0 8px rgb(242 194 48 / 0.3); }
+  .plano-division { position: absolute; top: 0; height: 33%; width: 0.5%; background: linear-gradient(#d4a83a, #8a6a1e); box-shadow: 0 0 8px rgb(242 194 48 / 0.3); }
   .plano-mesa {
     position: absolute; transform: translate(-50%, -50%); padding: 0.55%;
     border-radius: 6%/12%; background: linear-gradient(135deg, #6b3420, #3a170c);
@@ -453,6 +453,18 @@
     position: relative; display: block; width: 100%; height: 100%; border-radius: 3%/6%;
     box-shadow: inset 0 0 0 3px rgb(0 0 0 / 0.18), inset 0 0 22px rgb(255 217 160 / 0.25);
   }
+  /* tres bandas como las del club: riel de roble claro sobre cuerpo gris */
+  .plano-mesa-carambola {
+    background: linear-gradient(135deg, #d6c3a2, #a88f6a);
+    box-shadow: 1px 1px 0 #7d8285, 2px 2px 0 #7d8285, 3px 3px 0 #6c7174, 4px 4px 0 #5d6265, 10px 14px 18px rgb(0 0 0 / 0.55);
+  }
+  .plano-mesa-girada.plano-mesa-pool .plano-pano { background:
+    radial-gradient(circle at 0 0, #050505 0 5%, transparent 5.5%), radial-gradient(circle at 100% 0, #050505 0 5%, transparent 5.5%),
+    radial-gradient(circle at 0 100%, #050505 0 5%, transparent 5.5%), radial-gradient(circle at 100% 100%, #050505 0 5%, transparent 5.5%),
+    radial-gradient(circle at 0 50%, #050505 0 4%, transparent 4.5%), radial-gradient(circle at 100% 50%, #050505 0 4%, transparent 4.5%),
+    radial-gradient(ellipse at 50% 45%, #14955c, #0b6a40 75%); }
+  .plano-mesa-girada .bola { width: 11%; }
+  .plano-mesa-girada .plano-numero { left: -30%; top: -8%; }
   .plano-mesa-carambola .plano-pano { background: radial-gradient(ellipse at 50% 45%, #2f74d6, #1a4f9f 75%); }
   .plano-mesa-pool .plano-pano { background:
     radial-gradient(circle at 0 0, #050505 0 5%, transparent 5.5%), radial-gradient(circle at 100% 0, #050505 0 5%, transparent 5.5%),
@@ -486,7 +498,7 @@
   .sala-controles { bottom: 3.25rem; top: 1rem; align-content: flex-start; }
   .sala-ayuda { left: 1rem; transform: none; text-align: left; max-width: calc(100% - 5rem); }
   .hay-eleccion .sala-controles { bottom: 5rem; }
-  .plano { width: 88%; transform: scale(var(--zoom)) rotateX(46deg) rotateZ(-62deg); }
-  .plano[data-vista="ras"] { transform: scale(calc(var(--zoom) * 1.1)) rotateX(60deg) rotateZ(-70deg); }
+  .plano { flex: none; width: 128%; transform: scale(var(--zoom)) rotateX(34deg) rotateZ(-78deg); }
+  .plano[data-vista="ras"] { transform: scale(calc(var(--zoom) * 1.05)) rotateX(52deg) rotateZ(-82deg); }
   .plano[data-vista="cenital"] { transform: scale(var(--zoom)) rotateZ(-90deg); }
 }
