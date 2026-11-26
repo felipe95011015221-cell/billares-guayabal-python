@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { calcularValor, duracion, hora, pesos, sumarDias } from "../club/static/club/js/sala/precios.js";
-import { PUESTOS, ubicarMesas } from "../club/static/club/js/sala/distribucion.js";
+import { PUESTOS, SALA, ubicarMesas } from "../club/static/club/js/sala/distribucion.js";
 
 const promo = { valorHora: 8000, hastaMin: 15 * 60 };
 
@@ -44,9 +44,18 @@ test("cada mesa recibe su puesto y las extra no se pierden", () => {
   const mesas = [...Array(5)].map((_, i) => ({ id: i + 1, modalidad: "carambola" }))
     .concat([{ id: 6, modalidad: "pool" }, { id: 7, modalidad: "pool" }, { id: 8, modalidad: "pool" }]);
   const ubicadas = ubicarMesas(mesas);
-  assert.deepEqual({ x: ubicadas[0].x, z: ubicadas[0].z }, PUESTOS.carambola[0]);
-  assert.deepEqual({ x: ubicadas[5].x, z: ubicadas[5].z }, PUESTOS.pool[0]);
+  assert.deepEqual({ x: ubicadas[0].x, z: ubicadas[0].z, rot: ubicadas[0].rot }, PUESTOS.carambola[0]);
+  assert.deepEqual({ x: ubicadas[5].x, z: ubicadas[5].z, rot: ubicadas[5].rot }, PUESTOS.pool[0]);
   assert.ok(Number.isFinite(ubicadas[7].x) && Number.isFinite(ubicadas[7].z));
   const claves = new Set(ubicadas.map((m) => `${m.x},${m.z}`));
   assert.equal(claves.size, ubicadas.length); // dos mesas nunca comparten puesto
+});
+
+test("como el club: una sola fila a lo largo, cada mesa atravesada, 5 de tres bandas y luego 2 de pool", () => {
+  const mesas = [...Array(5)].map((_, i) => ({ id: i + 1, modalidad: "carambola" }))
+    .concat([{ id: 6, modalidad: "pool" }, { id: 7, modalidad: "pool" }]);
+  const u = ubicarMesas(mesas);
+  assert.ok(u.every((m) => m.z === 0 && Math.abs(m.rot - Math.PI / 2) < 1e-9));
+  for (let i = 1; i < u.length; i++) assert.ok(u[i].x > u[i - 1].x); // en orden, de la 1 a la 7
+  assert.ok(u[4].x < SALA.divisionX && u[5].x > SALA.divisionX); // las de pool, después de la división
 });
