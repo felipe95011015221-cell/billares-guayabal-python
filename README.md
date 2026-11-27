@@ -125,7 +125,7 @@ En `club/negocio.py` cada dato tiene un estado: `confirmado`, `publico` (visto e
 | Dirección | Verificar con el club |
 | Teléfono / WhatsApp 314 773 0533 | Verificar con el club |
 | Horario | Verificar con el club |
-| Número y tipo de mesas | Confirmado: 5 de carambola a tres bandas y 2 de pool. Tarifa por hora: COP 15.000. Renómbralas en el panel si quieres. |
+| Número y tipo de mesas | Confirmado: 5 de carambola a tres bandas y 4 de pool (Mesa 8 y Mesa 9 en el segundo piso). Tarifa por hora: COP 15.000. Renómbralas en el panel si quieres. |
 | Tarifas | Por confirmar. Sin tarifa, la web muestra «Tarifa por confirmar». |
 | Clases e instructores | Programas propuestos. Márcalos como «confirmada» en el panel cuando estén aprobados. |
 | Torneos | Solo se publican los que marques como «publicado» en el panel. |
