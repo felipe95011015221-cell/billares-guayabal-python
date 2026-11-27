@@ -103,6 +103,10 @@ HORARIO_CIERRE_MIN = 26 * 60
 # si el club la desactiva o la cambia, la web vuelve a calcular con la tarifa normal de cada mesa.
 PROMO_HORA_VALOR = 8000
 PROMO_HORA_HASTA_MIN = 15 * 60
+# Mesas que todavía no están disponibles (pedido del propietario, 27 nov. 2026): las de pool del segundo piso.
+# Se ven en la sala 3D con el letrero «Próximamente», pero no se pueden elegir ni reservar.
+# Cuando abran, basta con quitar sus nombres de esta lista.
+MESAS_PROXIMAMENTE = ("Mesa 8", "Mesa 9")
 # Duraciones que se pueden pedir (minutos) y días hacia adelante para elegir fecha.
 SALA_DURACIONES = (60, 90, 120, 150, 180, 240)
 SALA_DIAS_MAX = 60

@@ -80,9 +80,17 @@ def inicio(request):
     })
 
 
+def _mesas_proximamente():
+    """Mesas anunciadas que todavía no se pueden reservar (se muestran como «Próximamente»)."""
+    from .models import Mesa
+
+    return list(Mesa.objects.filter(activa=True, nombre__in=negocio.MESAS_PROXIMAMENTE).order_by("orden", "id"))
+
+
 def club(request):
     cantidades = {g["clave"]: g["cantidad"] for g in _mesas_por_modalidad()}
     return render(request, "club/club.html", {
+        "pool_proximamente": sum(1 for m in _mesas_proximamente() if m.modalidad == "pool"),
         "mesa_tres_bandas": negocio.MESA_TRES_BANDAS,
         "mesas_carambola": cantidades.get("carambola", 0),
         "mesas_pool": cantidades.get("pool", 0),
@@ -98,7 +106,8 @@ def _mesas_por_modalidad():
 
     grupos = []
     for clave, nombre in Modalidad.choices:
-        mesas = list(Mesa.objects.filter(activa=True, modalidad=clave).order_by("orden", "id"))
+        mesas = list(Mesa.objects.filter(activa=True, modalidad=clave).exclude(nombre__in=negocio.MESAS_PROXIMAMENTE)
+                     .order_by("orden", "id"))
         for mesa in mesas:  # cada mesa tiene su botón «Reservar» con su nombre en el mensaje
             mesa.wa_url = negocio.enlace_whatsapp(f"reservas_{clave}", extra=f"Mesa: {mesa.nombre}")
         tarifas = {m.tarifa_hora for m in mesas}
@@ -129,11 +138,17 @@ def _datos_sala(grupos):
                 "modalidad": g["clave"], "modalidadNombre": g["nombre"],
                 "tarifa": int(mesa.tarifa_hora) if mesa.tarifa_hora else None,
             })
+    nombres_modalidad = dict(Modalidad.choices)
+    proximamente = [{
+        "id": f"proxima-{m.id}", "nombre": m.nombre, "numero": _numero_mesa(m, 0), "modalidad": m.modalidad,
+        "modalidadNombre": nombres_modalidad.get(m.modalidad, m.modalidad), "tarifa": None,
+    } for m in _mesas_proximamente()]
     valor_promo = f"{negocio.PROMO_HORA_VALOR:,}".replace(",", ".")
     hay_promo = Promocion.objects.vigentes().filter(titulo__contains=valor_promo).exists()
     ahora = timezone.localtime()
     return {
         "mesas": mesas,
+        "proximamente": proximamente,  # se dibujan en la sala, pero no se pueden elegir
         "promo": {"valorHora": negocio.PROMO_HORA_VALOR, "hastaMin": negocio.PROMO_HORA_HASTA_MIN} if hay_promo else None,
         "aperturaMin": negocio.HORARIO_APERTURA_MIN, "cierreMin": negocio.HORARIO_CIERRE_MIN,
         "duraciones": list(negocio.SALA_DURACIONES), "diasMax": negocio.SALA_DIAS_MAX,

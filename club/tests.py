@@ -707,3 +707,40 @@ class PaginaClubTests(TestCase):
             self.assertIn(nombre, html)
             self.assertIn(cargo, html)
         self.assertEqual(html.count('viewBox="0 0 80 100"'), 5)  # un avatar por persona mientras llegan las fotos
+
+
+@override_settings(RESERVAS_EN_LINEA=False)
+class MesasProximamenteTests(TestCase):
+    """Mesa 8 y Mesa 9 (segundo piso) se anuncian como «Próximamente» y no se pueden reservar."""
+
+    def setUp(self):
+        Mesa.objects.all().delete()
+        for i, mod in enumerate(["carambola"] * 5 + ["pool"] * 4, 1):
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, tarifa_hora=15000, orden=i)
+
+    def test_no_se_pueden_elegir_ni_reservar(self):
+        import re
+
+        r = self.client.get("/reservas/")
+        html = r.content.decode()
+        self.assertEqual(len(re.findall(r'class="sala-ficha" data-mesa="\d+"', html)), 7)
+        self.assertNotIn('<option value="%d">Mesa 8</option>' % Mesa.objects.get(nombre="Mesa 8").id, html)
+        self.assertNotIn("Mesa: Mesa 8", html)
+        sala = r.context["sala"]
+        self.assertEqual([m["numero"] for m in sala["mesas"]], [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual([(m["numero"], m["modalidad"]) for m in sala["proximamente"]], [(8, "pool"), (9, "pool")])
+        self.assertIn("Próximamente", html)
+
+    def test_pagina_del_club_las_anuncia(self):
+        html = self.client.get("/club/").content.decode()
+        self.assertIn("Para el pool tenemos 2 mesas más, y pronto abriremos 2 más en el segundo piso.", html)
+
+    def test_al_abrir_se_vuelven_reservables(self):
+        from unittest import mock
+
+        from . import negocio
+
+        with mock.patch.object(negocio, "MESAS_PROXIMAMENTE", ()):
+            sala = self.client.get("/reservas/").context["sala"]
+        self.assertEqual(len(sala["mesas"]), 9)
+        self.assertEqual(sala["proximamente"], [])
