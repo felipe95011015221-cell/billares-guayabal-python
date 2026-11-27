@@ -487,6 +487,21 @@
   .plano-mesa:hover, .plano-mesa.es-resaltada { transform: translate(-50%, -50%) translateZ(10px); box-shadow: 1px 1px 0 #2a0f08, 2px 2px 0 #2a0f08, 3px 3px 0 #2a0f08, 4px 4px 0 #1d0a05, 0 0 0 3px rgb(242 194 48 / 0.45), 0 0 40px rgb(255 217 160 / 0.35); }
   .plano-mesa.es-elegida { transform: translate(-50%, -50%) translateZ(16px); box-shadow: 1px 1px 0 #2a0f08, 2px 2px 0 #2a0f08, 3px 3px 0 #2a0f08, 4px 4px 0 #1d0a05, 0 0 0 4px var(--color-oro), 0 0 60px rgb(242 194 48 / 0.55); }
   .plano-mesa.es-elegida .plano-numero { background: var(--color-oro); color: var(--color-carbon); border-color: #fff1b8; }
+  /* segundo piso: plataforma elevada al fondo del plano */
+  .plano-piso2 {
+    position: absolute; top: 0; bottom: 0; border-radius: 0.4rem;
+    background: linear-gradient(135deg, rgb(42 29 20 / 0.95), rgb(26 18 12 / 0.95));
+    border: 2px solid rgb(168 216 255 / 0.35);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5), 8px 12px 0 rgb(0 0 0 / 0.35);
+    transform: translateZ(18px);
+  }
+  .plano-piso2 span {
+    position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); white-space: nowrap;
+    font-size: 0.7rem; font-weight: 700; color: var(--color-oro);
+  }
+  .plano-mesa-alta { transform: translate(-50%, -50%) translateZ(20px); }
+  .plano-mesa-alta:hover, .plano-mesa-alta.es-resaltada { transform: translate(-50%, -50%) translateZ(30px); }
+  .plano-mesa-alta.es-elegida { transform: translate(-50%, -50%) translateZ(36px); }
   .plano-mesa[data-estado="ocupada"], .plano-mesa[data-estado="mantenimiento"] { filter: grayscale(0.7) brightness(0.6); }
 }
 @media (prefers-reduced-motion: reduce) {
