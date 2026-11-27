@@ -13,10 +13,11 @@ from club import negocio
 from club.disponibilidad import hoy_bogota, instante
 from club.models import Ajustes, Bloqueo, Clase, FotoGaleria, InscripcionTorneo, Mesa, Partido, Promocion, Reserva, SesionClase, Torneo
 
-# Inventario confirmado por el propietario (23 nov. 2026): 5 mesas de carambola a tres bandas y 2 de pool.
+# Inventario confirmado por el propietario: 5 mesas de carambola a tres bandas y 2 de pool (23 nov. 2026),
+# más 2 de pool en el segundo piso (27 nov. 2026).
 # Los nombres son genéricos; se pueden renombrar en el panel. Tarifa por hora confirmada: COP 15.000.
 MESAS_CLUB = [("Mesa 1", "carambola"), ("Mesa 2", "carambola"), ("Mesa 3", "carambola"), ("Mesa 4", "carambola"),
-              ("Mesa 5", "carambola"), ("Mesa 6", "pool"), ("Mesa 7", "pool")]
+              ("Mesa 5", "carambola"), ("Mesa 6", "pool"), ("Mesa 7", "pool"), ("Mesa 8", "pool"), ("Mesa 9", "pool")]
 TARIFA_HORA = 15000
 
 CLASES_PROPUESTAS = [
@@ -40,7 +41,7 @@ class Command(BaseCommand):
         if not Mesa.objects.exists():
             for i, (nombre, modalidad) in enumerate(MESAS_CLUB, 1):
                 Mesa.objects.create(nombre=nombre, modalidad=modalidad, orden=i, tarifa_hora=TARIFA_HORA)
-            self.stdout.write("· 7 mesas del club: 5 de carambola y 2 de pool (COP 15.000 la hora)")
+            self.stdout.write("· 9 mesas del club: 5 de carambola y 4 de pool, 2 de ellas en el segundo piso (COP 15.000 la hora)")
         if not Clase.objects.exists():
             for i, (titulo, modalidad, nivel, dur, desc) in enumerate(CLASES_PROPUESTAS):
                 Clase.objects.create(titulo=titulo, modalidad=modalidad, nivel=nivel, duracion_min=dur, descripcion=desc, orden=i)
