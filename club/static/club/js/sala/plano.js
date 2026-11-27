@@ -47,12 +47,13 @@ export function crearPlano(marco, mesas, { alSeleccionar, alResaltar } = {}) {
     boton.style.height = `${((enZ + 0.38) / fondo) * 100}%`;
     if (girada) boton.classList.add("plano-mesa-girada");
     if (m.segundoPiso) boton.classList.add("plano-mesa-alta");
+    if (m.proximamente) boton.classList.add("plano-mesa-proxima");
     boton.innerHTML = `<span class="plano-pano">${
       m.modalidad === "pool"
         ? '<i class="bola b1"></i><i class="bola b2"></i><i class="bola b3"></i><i class="bola b4"></i><i class="bola bb"></i>'
         : '<i class="bola blanca"></i><i class="bola amarilla"></i><i class="bola roja"></i>'
-    }</span><b class="plano-numero">${m.numero}</b>`;
-    boton.addEventListener("click", () => alSeleccionar?.(String(m.id)));
+    }</span><b class="plano-numero">${m.numero}</b>${m.proximamente ? '<span class="plano-pronto">Próximamente</span>' : ""}`;
+    if (!m.proximamente) boton.addEventListener("click", () => alSeleccionar?.(String(m.id)));
     boton.addEventListener("pointerenter", () => alResaltar?.(String(m.id)));
     boton.addEventListener("pointerleave", () => alResaltar?.(null));
     piso.append(boton);

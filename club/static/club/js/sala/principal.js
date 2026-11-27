@@ -31,8 +31,10 @@ function equipoLimitado() {
 
 function iniciar(datos) {
   raiz.hidden = false;
-  const mesas = ubicarMesas(datos.mesas);
-  const porId = new Map(mesas.map((m) => [String(m.id), m]));
+  // Las mesas «Próximamente» se dibujan en su puesto, pero no se pueden elegir ni reservar.
+  const todas = ubicarMesas([...datos.mesas, ...(datos.proximamente || []).map((m) => ({ ...m, proximamente: true }))]);
+  const mesas = todas.filter((m) => !m.proximamente);
+  const porId = new Map(todas.map((m) => [String(m.id), m]));
   const escenario = raiz.querySelector("[data-sala-escenario]");
   const lienzo = raiz.querySelector("[data-sala-lienzo]");
   const marcoPlano = raiz.querySelector("[data-sala-plano]");
@@ -60,7 +62,7 @@ function iniciar(datos) {
 
   function elegir(id, { desde = "sala" } = {}) {
     id = String(id);
-    if (!porId.has(id)) return;
+    if (!porId.has(id) || porId.get(id).proximamente) return;
     elegida = id;
     for (const f of fichas) f.setAttribute("aria-pressed", String(f.dataset.mesa === id));
     vista?.seleccionar(id, { enfocar: true });
@@ -75,7 +77,9 @@ function iniciar(datos) {
     for (const f of fichas) f.classList.toggle("es-resaltada", f.dataset.mesa === String(id));
     const m = id ? porId.get(String(id)) : null;
     if (!m || !punto) { etiqueta.hidden = true; return; }
-    etiqueta.innerHTML = `<b>${m.nombre}</b><span>${m.modalidadNombre}${m.segundoPiso ? " · segundo piso" : ""}</span><span>${pesos(m.tarifa)} la hora</span>`;
+    etiqueta.innerHTML = m.proximamente
+      ? `<b>${m.nombre}</b><span>${m.modalidadNombre}${m.segundoPiso ? " · segundo piso" : ""}</span><span>Próximamente: aún no se puede reservar</span>`
+      : `<b>${m.nombre}</b><span>${m.modalidadNombre}${m.segundoPiso ? " · segundo piso" : ""}</span><span>${pesos(m.tarifa)} la hora</span>`;
     etiqueta.style.transform = `translate(${Math.round(punto.x + 16)}px, ${Math.round(punto.y + 16)}px)`;
     etiqueta.hidden = false;
   }
@@ -110,7 +114,7 @@ function iniciar(datos) {
   function usarLigera({ recordar = true } = {}) {
     vista?.destruir();
     if (recordar) guardarPreferencia("ligera");
-    vista = crearPlano(marcoPlano, mesas, callbacks);
+    vista = crearPlano(marcoPlano, todas, callbacks);
     despuesDeMontar();
   }
 
@@ -122,7 +126,7 @@ function iniciar(datos) {
       vista?.destruir();
       if (recordar) guardarPreferencia("3d");
       const coarse = matchMedia("(pointer: coarse)").matches;
-      vista = crearEscena(lienzo, mesas, { ...callbacks, calidad: coarse || innerWidth < 900 ? "media" : "alta" });
+      vista = crearEscena(lienzo, todas, { ...callbacks, calidad: coarse || innerWidth < 900 ? "media" : "alta" });
       despuesDeMontar();
     } catch (error) {
       console.warn("Sala 3D no disponible; se usa la vista ligera.", error);

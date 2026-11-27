@@ -144,6 +144,22 @@ export function numero(n, elegido = false) {
   return t;
 }
 
+/** Cartel dorado con texto (por ejemplo «Próximamente») para colgar sobre una mesa. */
+export function cartel(texto) {
+  const [c, g] = lienzo(512, 128);
+  g.beginPath();
+  if (g.roundRect) g.roundRect(6, 6, 500, 116, 58); else g.rect(6, 6, 500, 116);
+  g.fillStyle = "rgba(10,27,52,0.94)"; g.fill();
+  g.lineWidth = 6; g.strokeStyle = "#f2c230"; g.stroke();
+  g.fillStyle = "#f2c230";
+  g.font = '700 58px "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif';
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(texto, 256, 68);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 /** Halo rectangular suave (para el resplandor bajo la mesa y la sombra de contacto). */
 export function halo({ color = "255,255,255", fuerza = 1 } = {}) {
   const [c, g] = lienzo(256, 256);

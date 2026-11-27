@@ -420,6 +420,14 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     etiqueta.position.set(-OL / 2 + 0.05, 1.18, OW / 2 - 0.05);
     etiqueta.renderOrder = 10;
     grupo.add(etiqueta);
+    if (m.proximamente) {
+      // mesa anunciada que aún no abre: cartel «Próximamente» y luz baja
+      const aviso = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx.cartel("Próximamente"), depthTest: false, transparent: true }));
+      aviso.scale.set(2.6, 0.65, 1);
+      aviso.position.set(0, 1.7, 0);
+      aviso.renderOrder = 11;
+      grupo.add(aviso);
+    }
 
     // caja invisible para detectar el cursor y el toque
     const caja = new THREE.Mesh(new THREE.BoxGeometry(OL + 0.2, 1.0, OW + 0.2), new THREE.MeshBasicMaterial({ visible: false }));
@@ -611,8 +619,9 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   function ponerHover(id, punto) {
     if (id === idHover) return;
     idHover = id;
-    for (const [k, m] of mesas) m.metaHover = k === id ? 1 : 0;
-    lienzo.style.cursor = id ? "pointer" : "";
+    const elegible = id && !mesas.get(id)?.datos.proximamente;
+    for (const [k, m] of mesas) m.metaHover = k === id && elegible ? 1 : 0;
+    lienzo.style.cursor = elegible ? "pointer" : "";
     alResaltar?.(id, punto);
   }
 
@@ -642,7 +651,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
       m.sel = suavizar(m.sel, m.metaSel, dt, 8);
       if (Math.abs(m.encendido + m.hover + m.sel - antes) < 1e-4) continue;
       cambio = true;
-      const apagada = m.estado === "ocupada" || m.estado === "mantenimiento" ? 0.35 : 1;
+      const apagada = m.datos.proximamente ? 0.3 : m.estado === "ocupada" || m.estado === "mantenimiento" ? 0.35 : 1;
       m.foco.intensity = 9 * m.encendido * apagada * (1 + 0.55 * m.hover + 1.1 * m.sel);
       colorInterior.copy(LUZ_CALIDA).multiplyScalar((0.15 + 0.85 * m.encendido) * apagada * (1 + 0.4 * m.hover + 0.6 * m.sel));
       for (const mat of m.interiores) mat.color.copy(colorInterior);
