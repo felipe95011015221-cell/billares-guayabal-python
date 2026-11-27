@@ -299,7 +299,7 @@ class InventarioDeMesasTests(TestCase):
 
         importlib.import_module("club.migrations.0005_inventario_de_mesas").completar(apps, None)
 
-    def test_comando_crea_7_mesas_con_tarifa(self):
+    def test_comando_crea_9_mesas_con_tarifa(self):
         from django.core.management import call_command
 
         from .models import Mesa
@@ -307,7 +307,7 @@ class InventarioDeMesasTests(TestCase):
         Mesa.objects.all().delete()
         call_command("cargar_datos_iniciales", verbosity=0)
         self.assertEqual(Mesa.objects.filter(modalidad="carambola").count(), 5)
-        self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 2)
+        self.assertEqual(Mesa.objects.filter(modalidad="pool").count(), 4)
         self.assertEqual(set(Mesa.objects.values_list("tarifa_hora", flat=True)), {15000})
 
     def _esquema(self):
@@ -404,3 +404,30 @@ class MigracionPromocion8000Tests(TestCase):
         p = Promocion.objects.get(titulo__contains="8.000")
         self.assertTrue(p.activa)
         self.assertFalse(Promocion.objects.filter(titulo__contains="7.500").exists())
+
+
+class MesasSegundoPisoTests(TestCase):
+    """La migración 0007 agrega Mesa 8 y Mesa 9 de pool (segundo piso) sin tocar las existentes."""
+
+    def _migrar(self):
+        import importlib
+
+        from django.apps import apps
+
+        importlib.import_module("club.migrations.0007_mesas_pool_segundo_piso").agregar(apps, None)
+
+    def test_agrega_mesa_8_y_9_una_sola_vez(self):
+        Mesa.objects.all().delete()
+        for i, mod in enumerate(["carambola"] * 5 + ["pool"] * 2, 1):
+            Mesa.objects.create(nombre=f"Mesa {i}", modalidad=mod, orden=i, tarifa_hora=15000)
+        ids = set(Mesa.objects.values_list("pk", flat=True))
+        self._migrar(); self._migrar()  # idempotente
+        self.assertEqual(Mesa.objects.count(), 9)
+        self.assertEqual(list(Mesa.objects.filter(nombre__in=["Mesa 8", "Mesa 9"]).values_list("modalidad", "tarifa_hora", "orden")),
+                         [("pool", 15000, 8), ("pool", 15000, 9)])
+        self.assertTrue(ids <= set(Mesa.objects.values_list("pk", flat=True)))
+
+    def test_sin_mesas_no_hace_nada(self):
+        Mesa.objects.all().delete()
+        self._migrar()
+        self.assertEqual(Mesa.objects.count(), 0)
