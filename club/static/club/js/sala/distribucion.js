@@ -5,17 +5,23 @@
  */
 export const SALA = {
   // Salón largo y angosto, como el club: las mesas van en una sola fila a lo largo (eje x).
-  xMin: -11.6, xMax: 11.8, zMin: -3.3, zMax: 3.3,
+  xMin: -11.6, xMax: 18.9, zMin: -3.3, zMax: 3.3,
   // separación entre la zona de tres bandas y la de pool
   divisionX: 5.05,
+  // segundo piso (mezanine) al fondo del salón, sobre columnas y con escalera desde el primer piso
+  segundoPiso: { xMin: 12.0, xMax: 18.9, y: 3.2 },
 };
 
-// Cada mesa atravesada a lo ancho del salón (rot = 90°): primero las 5 de tres bandas y al fondo las 2 de pool.
+// Cada mesa atravesada a lo ancho del salón (rot = 90°): primero las 5 de tres bandas, luego 2 de pool
+// y, en el segundo piso (y = altura del piso), las otras 2 de pool.
 const A_LO_ANCHO = Math.PI / 2;
 const PASO = 3.25; // de centro a centro entre mesas
 export const PUESTOS = {
-  carambola: [0, 1, 2, 3, 4].map((i) => ({ x: -9.75 + i * PASO, z: 0, rot: A_LO_ANCHO })),
-  pool: [0, 1].map((i) => ({ x: 6.75 + i * PASO, z: 0, rot: A_LO_ANCHO })),
+  carambola: [0, 1, 2, 3, 4].map((i) => ({ x: -9.75 + i * PASO, z: 0, y: 0, rot: A_LO_ANCHO })),
+  pool: [
+    ...[0, 1].map((i) => ({ x: 6.75 + i * PASO, z: 0, y: 0, rot: A_LO_ANCHO })),
+    ...[0, 1].map((i) => ({ x: 13.85 + i * 3.2, z: 0, y: SALA.segundoPiso.y, rot: A_LO_ANCHO })),
+  ],
 };
 
 // Medidas de cada tipo de mesa (área de juego en metros).
@@ -32,8 +38,8 @@ export function ubicarMesas(mesas) {
     const lista = PUESTOS[m.modalidad] || [];
     const i = usados[m.modalidad] ?? 0;
     usados[m.modalidad] = i + 1;
-    const puesto = lista[i] || { x: SALA.xMin + 2 + extra++ * 3.9, z: SALA.zMax + 1.6, rot: 0 };
-    return { rot: 0, ...m, ...puesto };
+    const puesto = lista[i] || { x: SALA.xMin + 2 + extra++ * 3.9, z: SALA.zMax + 1.6, y: 0, rot: 0 };
+    return { rot: 0, y: 0, ...m, ...puesto, segundoPiso: (puesto.y || 0) > 0 };
   });
 }
 

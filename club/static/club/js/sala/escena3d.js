@@ -89,33 +89,90 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   losa.receiveShadow = true;
   scene.add(losa);
 
-  const alfombra = (x0, x1, color, borde) => {
+  const alfombra = (x0, x1, color, borde, y = 0) => {
     const a = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, fondoSala - 1.2),
       new THREE.MeshStandardMaterial({ map: tx.alfombra(color, borde), roughness: 1 }));
     a.rotation.x = -Math.PI / 2;
-    a.position.set((x0 + x1) / 2, 0.004, centro.z + 0.2);
+    a.position.set((x0 + x1) / 2, y + 0.004, centro.z + 0.2);
     a.receiveShadow = true;
     scene.add(a);
   };
   const division = b.divisionX ?? 3.75;
+  const sp = b.segundoPiso || null; // segundo piso (mezanine)
+  const finPrimerPiso = sp ? sp.xMin : b.xMax;
   alfombra(b.xMin + 0.5, division - 0.35, "#0d1d3a", "rgba(201,162,39,0.35)");
-  alfombra(division + 0.35, b.xMax - 0.4, "#0a2a21", "rgba(201,162,39,0.35)");
+  alfombra(division + 0.35, finPrimerPiso - 0.4, "#0a2a21", "rgba(201,162,39,0.35)");
 
   const ALTO_PARED = 3.3;
   const texPared = tx.pared();
-  const pared = (largo, x, z, rotY) => {
+  const pared = (largo, x, z, rotY, y0 = 0) => {
     const t = texPared.clone();
     t.needsUpdate = true;
     t.repeat.set(largo / 4.2, 1);
     const m = new THREE.Mesh(new THREE.BoxGeometry(largo, ALTO_PARED, 0.16),
       [M.oscuro, M.oscuro, M.oscuro, M.oscuro, new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }), M.oscuro]);
-    m.position.set(x, ALTO_PARED / 2, z);
+    m.position.set(x, y0 + ALTO_PARED / 2, z);
     m.rotation.y = rotY;
     m.receiveShadow = true;
     scene.add(m);
   };
   pared(anchoSala + 0.16, centro.x + 0.08, b.zMin - 0.08, 0);
   pared(fondoSala, b.xMax + 0.08, centro.z, -Math.PI / 2);
+
+  // ---------- segundo piso: losa sobre columnas, baranda de vidrio y escalera ----------
+  if (sp) {
+    const largoSp = sp.xMax - sp.xMin, xSp = (sp.xMin + sp.xMax) / 2;
+    pared(largoSp + 0.16, xSp + 0.08, b.zMin - 0.08, 0, sp.y); // paredes del segundo piso
+    pared(fondoSala, b.xMax + 0.08, centro.z, -Math.PI / 2, sp.y);
+    const matPiso2 = new THREE.MeshStandardMaterial({ map: tx.piso(), roughness: 0.5 });
+    matPiso2.map.repeat.set(largoSp / 5.5, fondoSala / 5.5);
+    const losa2 = new THREE.Mesh(new THREE.BoxGeometry(largoSp, 0.28, fondoSala),
+      [M.oscuro, M.oscuro, matPiso2, M.oscuro, M.oscuro, M.oscuro]);
+    losa2.position.set(xSp, sp.y - 0.14, centro.z);
+    losa2.castShadow = alta;
+    losa2.receiveShadow = true;
+    scene.add(losa2);
+    alfombra(sp.xMin + 0.4, sp.xMax - 0.4, "#0a2a21", "rgba(201,162,39,0.35)", sp.y);
+    const metal = new THREE.MeshStandardMaterial({ color: "#4a5057", metalness: 0.7, roughness: 0.4 });
+    const geoColumna = new THREE.CylinderGeometry(0.11, 0.11, sp.y - 0.28, 16);
+    for (const x of [sp.xMin + 0.2, xSp, sp.xMax - 0.2]) for (const z of [b.zMin + 0.2, b.zMax - 0.2]) {
+      const col = new THREE.Mesh(geoColumna, metal);
+      col.position.set(x, (sp.y - 0.28) / 2, z);
+      col.castShadow = alta;
+      scene.add(col);
+    }
+    // baranda de vidrio con pasamanos de latón (borde hacia el salón y borde frontal)
+    const vidrio = new THREE.MeshPhysicalMaterial({ color: "#a8d8ff", transparent: true, opacity: 0.16, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide });
+    const ANCHO_ESCALERA = 1.05;
+    const baranda = (largo, x, z, rotY) => {
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(largo, 0.95, 0.02), vidrio);
+      panel.position.set(x, sp.y + 0.48, z);
+      panel.rotation.y = rotY;
+      const tubo = new THREE.Mesh(new THREE.BoxGeometry(largo, 0.05, 0.07), M.laton);
+      tubo.position.set(x, sp.y + 0.98, z);
+      tubo.rotation.y = rotY;
+      scene.add(panel, tubo);
+    };
+    const largoBorde = fondoSala - ANCHO_ESCALERA - 0.1; // se deja el hueco de la escalera
+    baranda(largoBorde, sp.xMin + 0.02, b.zMin + largoBorde / 2, Math.PI / 2);
+    baranda(largoSp, xSp, b.zMax - 0.02, 0);
+    // escalera pegada al frente, subiendo hacia el segundo piso
+    const PELDANOS = 16, huellaP = 0.28, contrahuella = sp.y / PELDANOS;
+    const zEsc = b.zMax - ANCHO_ESCALERA / 2 - 0.05;
+    for (let i = 0; i < PELDANOS; i++) {
+      const alto = contrahuella * (i + 1);
+      const peldano = new THREE.Mesh(new THREE.BoxGeometry(huellaP, alto, ANCHO_ESCALERA), M.madera);
+      peldano.position.set(sp.xMin - (PELDANOS - i - 0.5) * huellaP, alto / 2, zEsc);
+      peldano.castShadow = alta;
+      peldano.receiveShadow = true;
+      scene.add(peldano);
+    }
+    const largoEsc = PELDANOS * huellaP;
+    const pasamanosEsc = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(largoEsc, sp.y), 0.05, 0.06), M.laton);
+    pasamanosEsc.position.set(sp.xMin - largoEsc / 2, sp.y / 2 + 0.95, b.zMax - 0.04);
+    pasamanosEsc.rotation.z = Math.atan2(sp.y, largoEsc);
+    scene.add(pasamanosEsc);
+  }
 
   const letrero = (texto, x, y, z, rotY, ancho, tam) => {
     const mat = new THREE.MeshBasicMaterial({ map: tx.letrero(texto, { tam }), transparent: true, toneMapped: false, depthWrite: false });
@@ -135,8 +192,9 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   nombre.position.set(franja.position.x, 2.72, b.zMin + 0.15);
   scene.add(nombre);
   letrero("Tres bandas", Math.max(franja.position.x + franjaLargo / 2 + 2.2, division - 2.4), 2.6, b.zMin + 0.02, 0, 4.2, 140);
-  letrero("Pool", (division + b.xMax) / 2, 2.55, b.zMin + 0.02, 0, 3.2, 150);
-  letrero("Guayabal", b.xMax - 0.02, 2.5, centro.z, -Math.PI / 2, Math.min(4.4, fondoSala - 1), 160);
+  letrero("Pool", (division + finPrimerPiso) / 2, 2.55, b.zMin + 0.02, 0, 3.2, 150);
+  if (sp) letrero("Segundo piso", (sp.xMin + sp.xMax) / 2, sp.y + 2.55, b.zMin + 0.02, 0, 4.4, 140);
+  letrero("Guayabal", b.xMax - 0.02, (sp ? sp.y : 0) + 2.5, centro.z, -Math.PI / 2, Math.min(4.4, fondoSala - 1), 160);
 
   // media pared con pasamanos de latón entre las dos zonas
   const LARGO_MURO = Math.min(2.2, fondoSala * 0.35);
@@ -148,15 +206,15 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   scene.add(muro, pasamanos);
 
   // bancas de espectadores contra la pared del fondo y portatacos en la pared izquierda
-  const banca = (x) => {
+  const banca = (x, y = 0) => {
     const base = new THREE.Mesh(new RoundedBoxGeometry(1.9, 0.42, 0.5, 2, 0.04), M.madera);
-    base.position.set(x, 0.21, b.zMin + 0.38);
+    base.position.set(x, y + 0.21, b.zMin + 0.38);
     const cojin = new THREE.Mesh(new RoundedBoxGeometry(1.86, 0.1, 0.48, 2, 0.04), M.cuero);
-    cojin.position.set(x, 0.47, b.zMin + 0.38);
+    cojin.position.set(x, y + 0.47, b.zMin + 0.38);
     base.castShadow = cojin.castShadow = true;
     scene.add(base, cojin);
   };
-  mesasDatos.filter((m) => m.z - huella(m).hz > b.zMin + 0.7).forEach((m) => banca(m.x));
+  mesasDatos.filter((m) => m.z - huella(m).hz > b.zMin + 0.7).forEach((m) => banca(m.x, m.y || 0));
 
   const geoTaco = new THREE.CylinderGeometry(0.008, 0.016, 1.45, 8);
   const portatacos = (z) => {
@@ -181,7 +239,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   if (alta) {
     clave.castShadow = true;
     clave.shadow.mapSize.set(2048, 2048);
-    Object.assign(clave.shadow.camera, { left: -15, right: 15, top: 11, bottom: -11, near: 2, far: 45 });
+    Object.assign(clave.shadow.camera, { left: -19, right: 19, top: 12, bottom: -12, near: 2, far: 55 });
     clave.shadow.bias = -0.0004;
     clave.shadow.normalBias = 0.02;
   }
@@ -198,7 +256,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     const L = med.largo, W = med.ancho, c = 0.05, r = 0.15;
     const OL = L + 2 * (c + r), OW = W + 2 * (c + r);
     const grupo = new THREE.Group();
-    grupo.position.set(m.x, 0, m.z);
+    grupo.position.set(m.x, m.y || 0, m.z);
     grupo.rotation.y = m.rot || 0;
     const cuerpo = new THREE.Group(); // lo que se eleva al elegir la mesa
     grupo.add(cuerpo);
@@ -396,7 +454,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   const esVertical = () => camera.aspect < 1;
   const VISTAS = {
     // desde la mesa 1 mirando hacia el fondo del salón, como la foto del club
-    iso: () => (esVertical() ? { theta: -1.5, phi: 0.92 } : { theta: -1.02, phi: 0.98 }),
+    iso: () => (esVertical() ? { theta: -1.5, phi: 0.74 } : { theta: -1.02, phi: 0.98 }),
     cenital: () => ({ theta: esVertical() ? -Math.PI / 2 : 0, phi: 0.001 }),
     ras: () => ({ theta: esVertical() ? -1.45 : -1.2, phi: 1.2, acercar: 0.62 }),
   };
@@ -406,7 +464,8 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     new THREE.Vector3().setFromSpherical(esferica.set(radio, phi, theta)).add(target);
 
   // Encuadre: distancia y punto de mira para que el contorno llene la pantalla, centrado, con un margen.
-  function encuadrar(puntos, target, theta, phi, margen = 0.9) {
+  // «reserva» deja libre una franja arriba (en unidades de pantalla de -1 a 1) para los botones de vista.
+  function encuadrar(puntos, target, theta, phi, margen = 0.9, reserva = 0.14) {
     let d = 20;
     const mira = target.clone();
     const guardada = camera.position.clone(), guardadaQ = camera.quaternion.clone();
@@ -425,8 +484,8 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
       derecha.setFromMatrixColumn(camera.matrixWorld, 0);
       arriba.setFromMatrixColumn(camera.matrixWorld, 1);
       mira.addScaledVector(derecha, ((x0 + x1) / 2) * medioAlto * camera.aspect);
-      mira.addScaledVector(arriba, ((y0 + y1) / 2) * medioAlto);
-      d *= Math.max((x1 - x0) / 2, (y1 - y0) / 2) / margen;
+      mira.addScaledVector(arriba, ((y0 + y1) / 2 + reserva / 2) * medioAlto);
+      d *= Math.max((x1 - x0) / 2 / margen, (y1 - y0) / 2 / (margen - reserva / 2));
     }
     camera.position.copy(guardada);
     camera.quaternion.copy(guardadaQ);
@@ -436,6 +495,8 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   const contornoSala = [];
   for (const x of [b.xMin, b.xMax]) for (const z of [b.zMin, b.zMax]) contornoSala.push(new THREE.Vector3(x, 0, z));
   contornoSala.push(new THREE.Vector3(b.xMin, 2.6, b.zMin), new THREE.Vector3(b.xMax, 2.6, b.zMin), new THREE.Vector3(b.xMin, 2.6, b.zMax));
+  if (sp) contornoSala.push(new THREE.Vector3(sp.xMin, sp.y + 2.4, b.zMin), new THREE.Vector3(sp.xMax, sp.y + 2.4, b.zMin),
+    new THREE.Vector3(sp.xMax, sp.y + 1, b.zMax), new THREE.Vector3(sp.xMin, sp.y + 1, b.zMax));
 
   // ---------- animación de cámara ----------
   let tween = null;
@@ -473,7 +534,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
   }
   function destinoVista(nombre) {
     const v = VISTAS[nombre]();
-    const e = encuadrar(contornoSala, centro, v.theta, Math.max(v.phi, 0.001), 0.97);
+    const e = encuadrar(contornoSala, centro, v.theta, Math.max(v.phi, 0.001), 0.97, esVertical() ? 0.26 : 0.16);
     const radio = e.radio * (v.acercar || 1);
     controles.maxDistance = Math.max(Number.isFinite(controles.maxDistance) ? controles.maxDistance : 0, e.radio * 1.5);
     return { target: v.acercar ? e.target.lerp(centro, 0.5) : e.target, theta: v.theta, phi: v.phi, radio };
@@ -483,11 +544,12 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     if (!m) return;
     const actual = estadoCamara();
     const phi = Math.min(Math.max(actual.phi, 0.62), 1.12);
-    const target = new THREE.Vector3(m.grupo.position.x, 0.55, m.grupo.position.z);
+    const base = m.grupo.position.y;
+    const target = new THREE.Vector3(m.grupo.position.x, base + 0.55, m.grupo.position.z);
     const puntos = [];
     const { hx, hz } = huella(m.datos, 0.5);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) puntos.push(new THREE.Vector3(target.x + sx * hx, 0, target.z + sz * hz));
-    puntos.push(new THREE.Vector3(target.x, 2.2, target.z));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) puntos.push(new THREE.Vector3(target.x + sx * hx, base, target.z + sz * hz));
+    puntos.push(new THREE.Vector3(target.x, base + 2.2, target.z));
     const e = encuadrar(puntos, target, actual.theta, phi, 0.7);
     animarCamara({ target: e.target, theta: actual.theta, phi, radio: Math.min(actual.radio, e.radio) }, 1000);
   }
@@ -604,7 +666,7 @@ export function crearEscena(contenedor, mesasDatos, opciones = {}) {
     // que la cámara no se vaya lejos de la sala al desplazarla
     controles.target.x = THREE.MathUtils.clamp(controles.target.x, b.xMin, b.xMax);
     controles.target.z = THREE.MathUtils.clamp(controles.target.z, b.zMin, b.zMax);
-    controles.target.y = THREE.MathUtils.clamp(controles.target.y, 0, 1.5);
+    controles.target.y = THREE.MathUtils.clamp(controles.target.y, 0, sp ? sp.y + 1.5 : 1.5);
     sucio = true;
   });
   lienzo.addEventListener("webglcontextlost", (e) => { e.preventDefault(); alFallar?.(); });

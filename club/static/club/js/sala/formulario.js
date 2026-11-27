@@ -73,7 +73,7 @@ export function crearFormulario(form, datos, { alCambiarMesa } = {}) {
   function mensaje(r) {
     const lineas = [
       datos.mensaje, "",
-      `Mesa: ${r.mesa.nombre} (${r.mesa.modalidadNombre.toLowerCase()})`,
+      `Mesa: ${r.mesa.nombre} (${r.mesa.modalidadNombre.toLowerCase()}${r.mesa.segundoPiso ? ", segundo piso" : ""})`,
       `Fecha: ${fechaLarga(r.fecha)}`,
       `Hora: ${hora(r.inicioMin)} a ${hora(r.inicioMin + r.duracionMin)} (${duracion(r.duracionMin)})`,
       `Jugadores: ${r.jugadores}`,
@@ -89,7 +89,7 @@ export function crearFormulario(form, datos, { alCambiarMesa } = {}) {
     const m = r.mesa;
     ui.titulo.textContent = elegida && m ? m.nombre : "Tu reserva";
     ui.subtitulo.textContent = elegida && m
-      ? `${m.modalidadNombre} · ${pesos(m.tarifa)} la hora`
+      ? `${m.modalidadNombre}${m.segundoPiso ? " · Segundo piso" : ""} · ${pesos(m.tarifa)} la hora`
       : "Toca una mesa en la sala o elígela aquí.";
     ui.modalidad.textContent = m ? m.modalidadNombre : "—";
     if (!r.valida) {

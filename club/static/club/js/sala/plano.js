@@ -20,6 +20,15 @@ export function crearPlano(marco, mesas, { alSeleccionar, alResaltar } = {}) {
   division.className = "plano-division";
   division.style.left = `${pct(b.divisionX ?? 3.75, b.xMin, ancho)}%`;
   piso.append(division);
+  if (b.segundoPiso) {
+    // el segundo piso se dibuja como una plataforma más alta al fondo
+    const alto = document.createElement("div");
+    alto.className = "plano-piso2";
+    alto.style.left = `${pct(b.segundoPiso.xMin, b.xMin, ancho)}%`;
+    alto.style.width = `${((b.segundoPiso.xMax - b.segundoPiso.xMin) / ancho) * 100}%`;
+    alto.innerHTML = "<span>2.º piso</span>";
+    piso.append(alto);
+  }
 
   const nodos = new Map();
   for (const m of mesas) {
@@ -37,6 +46,7 @@ export function crearPlano(marco, mesas, { alSeleccionar, alResaltar } = {}) {
     boton.style.width = `${((enX + 0.38) / ancho) * 100}%`;
     boton.style.height = `${((enZ + 0.38) / fondo) * 100}%`;
     if (girada) boton.classList.add("plano-mesa-girada");
+    if (m.segundoPiso) boton.classList.add("plano-mesa-alta");
     boton.innerHTML = `<span class="plano-pano">${
       m.modalidad === "pool"
         ? '<i class="bola b1"></i><i class="bola b2"></i><i class="bola b3"></i><i class="bola b4"></i><i class="bola bb"></i>'

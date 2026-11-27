@@ -49,7 +49,12 @@ function iniciar(datos) {
   let vista = null; // escena 3D o plano ligero (misma API)
   let elegida = null;
 
-  const formulario = crearFormulario(raiz.querySelector("[data-sala-form]"), datos, {
+  // las fichas de las mesas del segundo piso lo dicen
+  for (const f of fichas) {
+    if (porId.get(f.dataset.mesa)?.segundoPiso) f.querySelector("small").textContent += " · 2.º piso";
+  }
+
+  const formulario = crearFormulario(raiz.querySelector("[data-sala-form]"), { ...datos, mesas }, {
     alCambiarMesa: (id) => elegir(id, { desde: "formulario" }),
   });
 
@@ -61,7 +66,7 @@ function iniciar(datos) {
     vista?.seleccionar(id, { enfocar: true });
     if (desde !== "formulario") formulario.ponerMesa(id);
     const m = porId.get(id);
-    barraTexto.innerHTML = `<b>${m.nombre}</b> ${m.modalidad === "pool" ? "Pool" : "Tres bandas"} · ${pesos(m.tarifa)} la hora`;
+    barraTexto.innerHTML = `<b>${m.nombre}</b> ${m.modalidad === "pool" ? "Pool" : "Tres bandas"}${m.segundoPiso ? " · 2.º piso" : ""} · ${pesos(m.tarifa)} la hora`;
     barra.hidden = false;
     escenario.classList.add("hay-eleccion");
   }
@@ -70,7 +75,7 @@ function iniciar(datos) {
     for (const f of fichas) f.classList.toggle("es-resaltada", f.dataset.mesa === String(id));
     const m = id ? porId.get(String(id)) : null;
     if (!m || !punto) { etiqueta.hidden = true; return; }
-    etiqueta.innerHTML = `<b>${m.nombre}</b><span>${m.modalidadNombre}</span><span>${pesos(m.tarifa)} la hora</span>`;
+    etiqueta.innerHTML = `<b>${m.nombre}</b><span>${m.modalidadNombre}${m.segundoPiso ? " · segundo piso" : ""}</span><span>${pesos(m.tarifa)} la hora</span>`;
     etiqueta.style.transform = `translate(${Math.round(punto.x + 16)}px, ${Math.round(punto.y + 16)}px)`;
     etiqueta.hidden = false;
   }
