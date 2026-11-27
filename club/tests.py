@@ -702,7 +702,7 @@ class PaginaClubTests(TestCase):
 
     def test_equipo_del_club_con_avatares(self):
         html = self.client.get("/club/").content.decode()
-        for nombre, cargo in [("Jose Domingo Duarte", "Administrador"), ("Katy Montero", "Cajera"), ("Juliana Acevedo", "Cajera"),
+        for nombre, cargo in [("Jose Domingo Duarte", "Administrador"), ("Katy Montero", "Cajera"), ("Juliana Duran", "Cajera"),
                               ("Roberto Sepulveda", "Ayudante"), ("Nataly Soto", "Mesera")]:
             self.assertIn(nombre, html)
             self.assertIn(cargo, html)

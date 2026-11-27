@@ -89,7 +89,7 @@ class Integrante:
 EQUIPO: list[Integrante] = [
     Integrante("Jose Domingo Duarte", "Administrador"),
     Integrante("Katy Montero", "Cajera"),
-    Integrante("Juliana Acevedo", "Cajera"),
+    Integrante("Juliana Duran", "Cajera"),
     Integrante("Roberto Sepulveda", "Ayudante"),
     Integrante("Nataly Soto", "Mesera"),
 ]
