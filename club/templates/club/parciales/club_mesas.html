@@ -12,7 +12,7 @@
       <div class="revelar">
         <p class="eyebrow mb-6">Nuestras mesas</p>
         <h2 id="mesas-club-titulo" class="titulo-seccion">{{ mesa_tres_bandas.marca }} {{ mesa_tres_bandas.modelo }} para jugar tres bandas en serio.</h2>
-        <p class="texto-seccion">{% if mesas_carambola %}Las {{ mesas_carambola }} mesas de tres bandas{% else %}Las mesas de tres bandas{% endif %} del club son {{ mesa_tres_bandas.marca }} {{ mesa_tres_bandas.modelo }}: pizarra con calefacción, bandas KleMatch y estructura de acero.{% if mesas_pool %} Para el pool tenemos {{ mesas_pool }} mesa{{ mesas_pool|pluralize }} más.{% endif %}</p>
+        <p class="texto-seccion">{% if mesas_carambola %}Las {{ mesas_carambola }} mesas de tres bandas{% else %}Las mesas de tres bandas{% endif %} del club son {{ mesa_tres_bandas.marca }} {{ mesa_tres_bandas.modelo }}: pizarra con calefacción, bandas KleMatch y estructura de acero.{% if mesas_pool %} Para el pool tenemos {{ mesas_pool }} mesa{{ mesas_pool|pluralize }} más{% if pool_proximamente %}, y pronto abriremos {{ pool_proximamente }} más en el segundo piso{% endif %}.{% endif %}</p>
       </div>
       <dl class="revelar mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2">
         {% for titulo, texto in mesa_tres_bandas.caracteristicas %}

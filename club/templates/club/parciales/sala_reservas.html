@@ -12,6 +12,7 @@
         {% for m in modalidades %}{% if m.cantidad %}
         <li><span class="sala-pano sala-pano-{{ m.clave }}" aria-hidden="true"></span><span><b>{{ m.nombre }}</b><br>{% for mesa in m.mesas %}{% if forloop.first %}{{ mesa.nombre }}{% elif forloop.last %} y {{ mesa.nombre|cut:"Mesa "|cut:"mesa " }}{% else %}, {{ mesa.nombre|cut:"Mesa "|cut:"mesa " }}{% endif %}{% endfor %}</span></li>
         {% endif %}{% endfor %}
+        {% if sala.proximamente %}<li><span class="sala-pano sala-pano-pool opacity-50" aria-hidden="true"></span><span><b>Próximamente</b><br>{% for m in sala.proximamente %}{% if forloop.first %}{{ m.nombre }}{% elif forloop.last %} y {{ m.nombre|cut:"Mesa "|cut:"mesa " }}{% else %}, {{ m.nombre|cut:"Mesa "|cut:"mesa " }}{% endif %}{% endfor %} en el segundo piso</span></li>{% endif %}
         {% with tarifa=modalidades.0.tarifa %}{% if tarifa %}<li><span class="sala-ficha-precio" aria-hidden="true">$</span><span><b>{{ tarifa|cop }} la hora</b><br>{% if sala.promo %}{{ sala.promo.valorHora|cop }} hasta las 3:00 p. m.{% else %}en todas las mesas{% endif %}</span></li>{% endif %}{% endwith %}
       </ul>
     </div>
