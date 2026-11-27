@@ -502,6 +502,15 @@
   .plano-mesa-alta { transform: translate(-50%, -50%) translateZ(20px); }
   .plano-mesa-alta:hover, .plano-mesa-alta.es-resaltada { transform: translate(-50%, -50%) translateZ(30px); }
   .plano-mesa-alta.es-elegida { transform: translate(-50%, -50%) translateZ(36px); }
+  /* mesas anunciadas que aún no se pueden reservar */
+  .plano-mesa.plano-mesa-proxima { cursor: default; }
+  .plano-mesa-proxima .plano-pano { filter: grayscale(0.5) brightness(0.6); }
+  .plano-mesa-alta.plano-mesa-proxima:hover { transform: translate(-50%, -50%) translateZ(20px); }
+  .plano-pronto {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); white-space: nowrap;
+    padding: 0.1rem 0.45rem; border-radius: 999px; font-size: 0.6rem; font-weight: 700;
+    background: rgb(10 27 52 / 0.92); color: var(--color-oro); border: 1px solid var(--color-oro);
+  }
   .plano-mesa[data-estado="ocupada"], .plano-mesa[data-estado="mantenimiento"] { filter: grayscale(0.7) brightness(0.6); }
 }
 @media (prefers-reduced-motion: reduce) {
